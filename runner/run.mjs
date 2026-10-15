@@ -124,7 +124,9 @@ export async function run({ eval: evaluate = false, headed = !evaluate, limit = 
       events.push({ ...event, id: lastTicketId });
       const line = `#${lastTicketId}  ${labelFor[event.decision.category] || event.decision.category}  ${Math.round(event.decision.confidence * 100)}%  ${event.decision.mode}  📸 ${event.decision.photo}  ${Math.round(event.latencyMs)} ms  $${event.costUsd.toFixed(5)}`;
       if (!evaluate) log(line);
-      visualTasks.push(io.toast(`${labelFor[event.decision.category] || event.decision.category} · ${Math.round(event.decision.confidence * 100)}% · ${event.decision.mode} · ${(event.latencyMs / 1000).toFixed(2)} s`));
+      const d = event.decision;
+      const tags = [d.mode === 'auto' ? 'auto-filed' : 'sent to a human', d.photo !== 'none' && `photo: ${d.photo.replace('_', ' ')}`, d.urgent && 'urgent', d.refund && 'wants refund'].filter(Boolean);
+      visualTasks.push(io.toast(`Jev → ${labelFor[d.category] || d.category}  ${Math.round(d.confidence * 100)}%\n${tags.join(' · ')}\n${(event.latencyMs / 1000).toFixed(2)} s · $${event.costUsd.toFixed(5)}`));
     } });
     await Promise.all(visualTasks);
     const states = await page.evaluate(() => window.helpline.state());

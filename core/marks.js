@@ -72,7 +72,7 @@
   }
   function toast(text) {
     root.querySelector('.jev-toast')?.remove();
-    overlay('jev-toast', { right: '20px', bottom: '20px', background: '#202124', color: 'white', padding: '10px 14px', borderRadius: '6px', font: '13px system-ui' }, text);
+    overlay('jev-toast', { right: '20px', top: '56px', maxWidth: '360px', background: '#202124f2', color: 'white', padding: '12px 16px', borderRadius: '10px', font: '14px/1.5 system-ui', whiteSpace: 'pre-line', boxShadow: '0 8px 24px #0005', borderLeft: '4px solid #d93025' }, text);
   }
   function hideOverlay() { for (const child of root.children) if (!child.classList.contains('jev-mark')) child.style.visibility = 'hidden'; }
   function showOverlay() { for (const child of root.children) child.style.visibility = ''; }

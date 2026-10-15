@@ -50,14 +50,16 @@
   async function click(id) {
     const element = marked.find(mark => mark.id === id)?.element;
     if (!element) return false;
+    if (element.closest('[data-ticket-id]')) clearBox(); // opening another ticket: old evidence no longer applies
     const rect = element.getBoundingClientRect();
     cursor(rect.left + rect.width / 2, rect.top + rect.height / 2);
     await new Promise(resolve => setTimeout(resolve, 160));
     element.click();
     return true;
   }
+  function clearBox() { for (const old of root.querySelectorAll('.jev-box')) old.remove(); }
   function box(fracBox, text) {
-    for (const old of root.querySelectorAll('.jev-box')) old.remove();
+    clearBox();
     const [x, y, w, h] = Array.isArray(fracBox) ? fracBox : [fracBox.x, fracBox.y, fracBox.w, fracBox.h];
     const el = overlay('jev-box', {
       left: `${x * innerWidth}px`, top: `${y * innerHeight}px`, width: `${w * innerWidth}px`, height: `${h * innerHeight}px`,
@@ -76,5 +78,5 @@
   }
   function hideOverlay() { for (const child of root.children) if (!child.classList.contains('jev-mark')) child.style.visibility = 'hidden'; }
   function showOverlay() { for (const child of root.children) child.style.visibility = ''; }
-  window.jevMarks = { add, remove, click, box, toast, cursor, hideOverlay, showOverlay };
+  window.jevMarks = { add, remove, click, box, clearBox, toast, cursor, hideOverlay, showOverlay };
 })();

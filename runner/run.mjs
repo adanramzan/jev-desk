@@ -12,7 +12,7 @@ const root = fileURLToPath(new URL('..', import.meta.url));
 const marksPath = join(root, 'core/marks.js');
 const labelFor = Object.fromEntries(CATEGORIES.map(([key, label]) => [key, label]));
 const percentile = (values, p) => values.length ? [...values].sort((a, b) => a - b)[Math.ceil(values.length * p) - 1] : 0;
-const rate = (n, total) => total ? n / total : 0;
+const rate = (n, total) => total ? n / total : null;
 
 async function getApiKey() {
   if (process.env.JEV_API_KEY) return process.env.JEV_API_KEY;
@@ -23,7 +23,13 @@ async function getApiKey() {
 function summarize(events, states, truth, stoppedBy, spentUsd) {
   const stateById = new Map(states.map(state => [state.id, state]));
   const truthById = new Map(truth.map(ticket => [ticket.id, ticket]));
-  const tickets = events.map(event => {
+  const seen = new Set();
+  const duplicates = [];
+  const tickets = events.filter(event => {
+    if (seen.has(event.id)) { duplicates.push(event.id); return false; }
+    seen.add(event.id);
+    return true;
+  }).map(event => {
     const ticket = truthById.get(event.id);
     const state = stateById.get(event.id);
     return {
@@ -42,7 +48,8 @@ function summarize(events, states, truth, stoppedBy, spentUsd) {
     return [key, { count: subset.length, accuracy: rate(subset.filter(ticket => ticket.correct).length, subset.length) }];
   }));
   return {
-    handled: tickets.length, stoppedBy, accuracy: rate(tickets.filter(ticket => ticket.correct).length, tickets.length),
+    handled: tickets.length, totalTickets: truth.length, stoppedBy, duplicates,
+    accuracy: rate(tickets.filter(ticket => ticket.correct).length, tickets.length),
     autoAccuracy: rate(auto.filter(ticket => ticket.correct).length, auto.length),
     autoRate: rate(auto.length, tickets.length), escalationRate: rate(tickets.length - auto.length, tickets.length),
     clickAccuracy: rate(auto.filter(ticket => ticket.category === ticket.decided && ticket.status === 'Triaged').length, auto.length),
@@ -55,19 +62,19 @@ function summarize(events, states, truth, stoppedBy, spentUsd) {
 }
 
 function markdown(report) {
-  const pct = value => `${(value * 100).toFixed(1)}%`;
+  const pct = value => value === null ? 'n/a' : `${(value * 100).toFixed(1)}%`;
   const rows = [
-    ['Tickets', report.handled], ['Stopped by', report.stoppedBy], ['Decision accuracy', pct(report.accuracy)],
+    ['Decision accuracy', pct(report.accuracy)],
     ['Auto accuracy', pct(report.autoAccuracy)], ['Auto rate', pct(report.autoRate)],
     ['Escalation rate', pct(report.escalationRate)], ['Click accuracy', pct(report.clickAccuracy)],
     ['Photo accuracy (image tickets)', pct(report.photoAccuracy)],
     ['p50 latency', `${report.p50LatencyMs.toFixed(0)} ms`], ['p95 latency', `${report.p95LatencyMs.toFixed(0)} ms`],
-    ['Total cost', `$${report.totalCostUsd.toFixed(6)}`], ['Cost per 1k tickets', `$${report.costPer1kUsd.toFixed(4)}`],
+    ['Total cost', `$${report.totalCostUsd.toFixed(6)}`], ['Cost per 1k tickets', report.costPer1kUsd === null ? 'n/a' : `$${report.costPer1kUsd.toFixed(4)}`],
   ];
-  return `# Jev Desk eval\n\n| Metric | Value |\n| --- | ---: |\n${rows.map(row => `| ${row.join(' | ')} |`).join('\n')}\n\n## Per category\n\n| Category | Count | Accuracy |\n| --- | ---: | ---: |\n${Object.entries(report.perCategory).map(([key, value]) => `| ${labelFor[key]} | ${value.count} | ${pct(value.accuracy)} |`).join('\n')}\n\n## Confusion\n\n${report.confusion.length ? report.confusion.map(item => `- #${item.id}: ${item.truth} → ${item.decided}`).join('\n') : 'None'}\n`;
+  return `# Jev Desk eval\n\nHandled ${report.handled} of ${report.totalTickets} tickets · Stopped by: ${report.stoppedBy}\n\n| Metric | Value |\n| --- | ---: |\n${rows.map(row => `| ${row.join(' | ')} |`).join('\n')}\n\n## Per category\n\n| Category | Count | Accuracy |\n| --- | ---: | ---: |\n${Object.entries(report.perCategory).map(([key, value]) => `| ${labelFor[key]} | ${value.count} | ${pct(value.accuracy)} |`).join('\n')}\n\n## Confusion\n\n${report.confusion.length ? report.confusion.map(item => `- #${item.id}: ${item.truth} → ${item.decided}`).join('\n') : 'None'}\n\n## Duplicate ticket IDs\n\n${report.duplicates.length ? report.duplicates.map(id => `- #${id}`).join('\n') : 'None'}\n\n## Errors\n\n${report.errors.length ? report.errors.map(error => `- ${error}`).join('\n') : 'None'}\n`;
 }
 
-export async function run({ eval: evaluate = false, headed = !evaluate, limit = Infinity, slow = 0, budgetUsd = 4, baseUrl, apiKey, ledgerPath = '.jev-spend.json', reportsDir = 'reports', log = console.log, onPage } = {}) {
+export async function run({ eval: evaluate = false, headed = !evaluate, limit = Infinity, slow = 0, budgetUsd = 4, baseUrl, apiKey, ledgerPath = join(root, '.jev-spend.json'), reportsDir = join(root, 'reports'), log = console.log, onPage } = {}) {
   if (typeof budgetUsd !== 'number' || !Number.isFinite(budgetUsd) || budgetUsd <= 0) throw new Error('budgetUsd must be a finite positive number');
   const key = apiKey || await getApiKey();
   if (!key) throw new Error('JEV_API_KEY is required');
@@ -76,7 +83,7 @@ export async function run({ eval: evaluate = false, headed = !evaluate, limit = 
   const spentBefore = JSON.parse(await readFile(ledgerFile, 'utf8').catch(() => '{"spentUsd":0}')).spentUsd;
   if (typeof spentBefore !== 'number' || !Number.isFinite(spentBefore) || spentBefore < 0) throw new Error('Invalid spend ledger');
   const budget = Math.min(4, budgetUsd);
-  const server = await startServer();
+  const server = await startServer(0);
   let browser;
   try {
     browser = await chromium.launch({ headless: !headed, slowMo: slow });
@@ -122,7 +129,7 @@ export async function run({ eval: evaluate = false, headed = !evaluate, limit = 
     const states = await page.evaluate(() => window.helpline.state());
     const report = summarize(events, states, truth, result.stoppedBy, jev.spent() - spentBefore);
     report.errors = errors;
-    await io.toast(`${report.handled} tickets · ${(report.accuracy * 100).toFixed(0)}% correct · $${report.totalCostUsd.toFixed(5)} spent`);
+    await io.toast(`${report.handled} tickets · ${report.accuracy === null ? 'n/a' : `${(report.accuracy * 100).toFixed(0)}%`} correct · $${report.totalCostUsd.toFixed(5)} spent`);
     if (!evaluate) await page.waitForTimeout(Math.max(1500, slow * 4));
     await mkdir(outputDir, { recursive: true });
     const reportPath = join(outputDir, `eval-${new Date().toISOString().replace(/[:.]/g, '-')}.md`);
@@ -139,12 +146,23 @@ export async function run({ eval: evaluate = false, headed = !evaluate, limit = 
 const truth = JSON.parse(await readFile(join(root, 'helpdesk/tickets.json'), 'utf8'));
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const args = process.argv.slice(2);
-  const value = flag => args[args.indexOf(flag) + 1];
-  const options = {
-    eval: args.includes('--eval'), headed: args.includes('--headed') || !args.includes('--eval'),
-    limit: args.includes('--limit') ? Number(value('--limit')) : Infinity,
-    slow: args.includes('--slow') ? Number(value('--slow')) : 0,
-    budgetUsd: args.includes('--budget') ? Number(value('--budget')) : 4,
-  };
-  run(options).catch(error => { console.error(error); process.exitCode = 1; });
+  try {
+    const numberFlag = (flag, fallback, valid) => {
+      if (!args.includes(flag)) return fallback;
+      const value = Number(args[args.indexOf(flag) + 1]);
+      if (!Number.isFinite(value) || !valid(value)) throw new Error(`${flag} requires a valid number`);
+      return value;
+    };
+    const options = {
+      eval: args.includes('--eval'), headed: args.includes('--headed') || !args.includes('--eval'),
+      limit: numberFlag('--limit', Infinity, value => Number.isInteger(value) && value >= 0),
+      slow: numberFlag('--slow', 0, value => value >= 0),
+      budgetUsd: numberFlag('--budget', 4, value => value > 0),
+    };
+    run(options).then(({ report }) => { if (report.stoppedBy === 'error') process.exitCode = 1; })
+      .catch(error => { console.error(error); process.exitCode = 1; });
+  } catch (error) {
+    console.error(error);
+    process.exitCode = 1;
+  }
 }

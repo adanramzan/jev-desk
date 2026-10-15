@@ -72,6 +72,13 @@ html, body {
   border-bottom: 1px solid var(--border);
 }
 .list-header h2 { font-size: 14px; font-weight: 600; }
+.list-tabs { display: flex; border-bottom: 1px solid var(--border); }
+.list-tabs button {
+  flex: 1; padding: 9px 4px; border: 0; border-bottom: 2px solid transparent;
+  background: var(--surface); color: var(--text-sec); font: 600 12px var(--font); cursor: pointer;
+}
+.list-tabs button[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); }
+.list-tabs button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 .list-body {
   flex: 1;
   overflow-y: auto;
@@ -274,7 +281,6 @@ html, body {
 
 /* Urgent toggle */
 .action-btn-urgent {
-  composes: action-btn;
   color: var(--text-sec);
 }
 .action-btn-urgent[aria-pressed="true"] {
@@ -285,9 +291,6 @@ html, body {
 }
 
 /* Escalate */
-.action-btn-escalate {
-  composes: action-btn;
-}
 .action-btn-escalate.active-escalate {
   background: var(--amber-light);
   color: var(--amber);

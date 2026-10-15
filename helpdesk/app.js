@@ -21,16 +21,17 @@ const STORAGE_KEY = 'helpline-state';
 let tickets = [];  // loaded from tickets.json
 let state = {};    // { [id]: { status, category, urgent } }
 let activeId = null;
+let listView = 'unassigned';
 
 // ---------- State management ----------
 
-function defaultState(t) {
+function defaultState() {
   return { status: 'New', category: null, urgent: false };
 }
 
 function loadState() {
   if (new URLSearchParams(location.search).has('reset')) {
-    localStorage.removeItem(STORAGE_KEY);
+    try { localStorage.removeItem(STORAGE_KEY); } catch { /* memory state still works */ }
     // Keep ?reset so reloads also reset
   }
   try {
@@ -41,13 +42,13 @@ function loadState() {
 }
 
 function saveState() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch { /* memory state still works */ }
 }
 
 function initState() {
   const saved = loadState();
   for (const t of tickets) {
-    state[t.id] = (saved && saved[t.id]) ? saved[t.id] : defaultState(t);
+    state[t.id] = (saved && saved[t.id]) ? saved[t.id] : defaultState();
   }
 }
 
@@ -101,7 +102,7 @@ function renderRow(t) {
 function renderList() {
   const container = document.getElementById('ticket-list');
   container.innerHTML = '';
-  for (const t of tickets) {
+  for (const t of tickets.filter(t => listView === 'all' || state[t.id].status === 'New')) {
     container.appendChild(renderRow(t));
   }
   updateCount();
@@ -111,6 +112,11 @@ function updateCount() {
   const newCount = tickets.filter(t => state[t.id].status === 'New').length;
   document.getElementById('topbar-count').textContent =
     `${tickets.length} tickets · ${newCount} new`;
+  document.getElementById('tab-unassigned').textContent = `Unassigned (${newCount})`;
+  document.getElementById('tab-all').textContent = `All (${tickets.length})`;
+  for (const view of ['unassigned', 'all']) {
+    document.getElementById(`tab-${view}`).setAttribute('aria-selected', String(listView === view));
+  }
 }
 
 // ---------- Rendering: detail ----------
@@ -209,11 +215,14 @@ function escalate(id) {
 }
 
 function refreshAfterAction(id) {
-  // Re-render the list (row updates) but keep the detail view open
+  // Keep action nodes and marks connected for a following Urgent click.
   renderList();
   if (activeId === id) {
-    const t = tickets.find(t => t.id === id);
-    if (t) renderActions(t);
+    const s = state[id];
+    const buttons = document.querySelectorAll('#detail-actions button');
+    CATEGORIES.forEach((cat, i) => buttons[i].classList.toggle('active-category', s.status === 'Triaged' && s.category === cat.key));
+    buttons[8].setAttribute('aria-pressed', String(s.urgent));
+    buttons[9].classList.toggle('active-escalate', s.status === 'Escalated');
   }
 }
 
@@ -242,6 +251,12 @@ async function boot() {
   const res = await fetch('tickets.json');
   tickets = await res.json();
   initState();
+  for (const view of ['unassigned', 'all']) {
+    document.getElementById(`tab-${view}`).addEventListener('click', () => {
+      listView = view;
+      renderList();
+    });
+  }
   renderList();
 }
 

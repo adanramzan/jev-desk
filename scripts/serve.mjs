@@ -1,6 +1,6 @@
 import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
-import { join, extname, resolve, normalize } from 'node:path';
+import { join, extname, resolve, normalize, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
@@ -22,7 +22,7 @@ const MIME = {
 function safePath(base, reqPath) {
   const decoded = decodeURIComponent(reqPath);
   const full = normalize(join(base, decoded));
-  if (!full.startsWith(base)) return null;
+  if (full !== base && !full.startsWith(base + sep)) return null;
   return full;
 }
 
@@ -33,12 +33,19 @@ async function handler(req, res) {
   let filePath;
 
   // /core/* → ROOT/core/* (read-only access for marks.js)
-  if (pathname.startsWith('/core/')) {
-    filePath = safePath(join(ROOT, 'core'), pathname.slice('/core'.length));
-  } else {
-    // Everything else → helpdesk/
-    if (pathname === '/') pathname = '/index.html';
-    filePath = safePath(join(ROOT, 'helpdesk'), pathname);
+  try {
+    if (pathname.startsWith('/core/')) {
+      filePath = safePath(join(ROOT, 'core'), pathname.slice('/core'.length));
+    } else {
+      // Everything else → helpdesk/
+      if (pathname === '/') pathname = '/index.html';
+      filePath = safePath(join(ROOT, 'helpdesk'), pathname);
+    }
+  } catch (error) {
+    if (!(error instanceof URIError)) throw error;
+    res.writeHead(400);
+    res.end('Bad request');
+    return;
   }
 
   if (!filePath) {
@@ -71,7 +78,7 @@ export function startServer(port = Number(process.env.PORT) || 5180) {
   return new Promise((resolve, reject) => {
     const server = createServer(handler);
     server.listen(port, () => {
-      const url = `http://localhost:${port}`;
+      const url = `http://localhost:${server.address().port}`;
       resolve({
         url,
         close: () => new Promise((r) => server.close(r)),

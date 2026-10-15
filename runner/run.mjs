@@ -74,7 +74,7 @@ function markdown(report) {
   return `# Jev Desk eval\n\nHandled ${report.handled} of ${report.totalTickets} tickets · Stopped by: ${report.stoppedBy}\n\n| Metric | Value |\n| --- | ---: |\n${rows.map(row => `| ${row.join(' | ')} |`).join('\n')}\n\n## Per category\n\n| Category | Count | Accuracy |\n| --- | ---: | ---: |\n${Object.entries(report.perCategory).map(([key, value]) => `| ${labelFor[key]} | ${value.count} | ${pct(value.accuracy)} |`).join('\n')}\n\n## Confusion\n\n${report.confusion.length ? report.confusion.map(item => `- #${item.id}: ${item.truth} → ${item.decided}`).join('\n') : 'None'}\n\n## Duplicate ticket IDs\n\n${report.duplicates.length ? report.duplicates.map(id => `- #${id}`).join('\n') : 'None'}\n\n## Errors\n\n${report.errors.length ? report.errors.map(error => `- ${error}`).join('\n') : 'None'}\n`;
 }
 
-export async function run({ eval: evaluate = false, headed = !evaluate, limit = Infinity, slow = 0, budgetUsd = 4, baseUrl, apiKey, ledgerPath = join(root, '.jev-spend.json'), reportsDir = join(root, 'reports'), log = console.log, onPage } = {}) {
+export async function run({ eval: evaluate = false, headed = !evaluate, limit = Infinity, slow = 0, budgetUsd = 4, baseUrl, apiKey, ledgerPath = join(root, '.jev-spend.json'), reportsDir = join(root, 'reports'), log = console.log, onPage, record } = {}) {
   if (typeof budgetUsd !== 'number' || !Number.isFinite(budgetUsd) || budgetUsd <= 0) throw new Error('budgetUsd must be a finite positive number');
   const key = apiKey || await getApiKey();
   if (!key) throw new Error('JEV_API_KEY is required');
@@ -87,7 +87,8 @@ export async function run({ eval: evaluate = false, headed = !evaluate, limit = 
   let browser;
   try {
     browser = await chromium.launch({ headless: !headed, slowMo: slow });
-    const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+    const context = await browser.newContext({ viewport: { width: 1280, height: 800 }, ...(record && { recordVideo: { dir: record, size: { width: 1280, height: 800 } } }) });
+    const page = await context.newPage();
     await page.addInitScript({ path: marksPath });
     await page.goto(`${server.url}/?reset`);
     if (!await page.evaluate(() => Boolean(window.jevMarks))) await page.addScriptTag({ path: marksPath });
@@ -138,6 +139,7 @@ export async function run({ eval: evaluate = false, headed = !evaluate, limit = 
     if (evaluate) log(markdown(report));
     return { report, reportPath };
   } finally {
+    await browser?.contexts()[0]?.close(); // flushes the --record video
     await browser?.close();
     await server.close();
   }
@@ -158,6 +160,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
       limit: numberFlag('--limit', Infinity, value => Number.isInteger(value) && value >= 0),
       slow: numberFlag('--slow', 0, value => value >= 0),
       budgetUsd: numberFlag('--budget', 4, value => value > 0),
+      record: args.includes('--record') ? args[args.indexOf('--record') + 1] : undefined,
     };
     run(options).then(({ report }) => { if (report.stoppedBy === 'error') process.exitCode = 1; })
       .catch(error => { console.error(error); process.exitCode = 1; });

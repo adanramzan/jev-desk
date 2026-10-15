@@ -19,11 +19,12 @@
     for (const { element, label } of marked) { element.removeAttribute('data-jev-mark'); label.remove(); }
     marked = [];
   }
-  function add({ scope } = {}) {
+  function add({ scope, strict = false } = {}) {
     remove();
     mount();
-    const area = scope ? document.querySelector(scope) || document : document;
-    for (const element of area.querySelectorAll('button, a[href], [role="button"], input, select, [data-ticket-id]')) {
+    const area = scope ? document.querySelector(scope) : document;
+    if (!area && strict) return [];
+    for (const element of (area || document).querySelectorAll('button, a[href], [role="button"], input, select, [data-ticket-id]')) {
       if (root.contains(element)) continue;
       const rect = element.getBoundingClientRect();
       const style = getComputedStyle(element);

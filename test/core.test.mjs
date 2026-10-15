@@ -161,6 +161,72 @@ test('agent triages two tickets, escalates low confidence, and stops when none r
   assert.deepEqual(io.waits, [150, 150]);
 });
 
+test('agent stops on an empty strict ticket scope before asking or clicking', async () => {
+  const io = fakeIo(), events = [], scopes = [];
+  io.addMarks = async (scope, options) => { scopes.push([scope, options]); return []; };
+  const jev = { spent: () => 0, ask: async () => { throw new Error('must not ask'); } };
+  assert.deepEqual(await runAgent({ jev, io, onEvent: event => events.push(event) }), { handled: 0, stoppedBy: 'error' });
+  assert.deepEqual(scopes, [['[data-ticket-list]', { strict: true }]]);
+  assert.deepEqual(io.clicks, []);
+  assert.match(events[0].message, /Helpdesk regions not found/);
+});
+
+test('agent stops when the action region has no marks', async () => {
+  const io = fakeIo(), events = [], scopes = [];
+  io.addMarks = async (scope, options) => { scopes.push([scope, options]); return scope === '#actions' ? [] : [{ id: 'id1' }]; };
+  const jev = { spent: () => 0, ask: async () => ({ answers: { next: answer('m1'), any_new: noul(1) }, latencyMs: 1 }) };
+  assert.deepEqual(await runAgent({ jev, io, scopes: { list: '#list', actions: '#actions' }, onEvent: event => events.push(event) }), { handled: 0, stoppedBy: 'error' });
+  assert.deepEqual(scopes, [['#list', { strict: true }], ['#actions', { strict: true }]]);
+  assert.deepEqual(io.clicks, ['id1']);
+  assert.match(events[0].message, /Helpdesk regions not found/);
+});
+
+test('low confidence next-ticket mark stops before opening a ticket', async () => {
+  const io = fakeIo(), events = [];
+  const jev = { spent: () => 0, ask: async () => ({ answers: { next: answer('m1', 0.84), any_new: noul(1) }, latencyMs: 1 }) };
+  assert.deepEqual(await runAgent({ jev, io, onEvent: event => events.push(event) }), { handled: 0, stoppedBy: 'error' });
+  assert.deepEqual(io.clicks, []);
+  assert.equal(events[0].type, 'error');
+});
+
+test('low confidence category mark escalates without category click', async () => {
+  const io = fakeIo(), events = [];
+  const scripted = [
+    { next: answer('m1'), any_new: noul(1) },
+    { category: answer('refund', 0.9), btn_refund: answer('m2', 0.84), btn_escalate: answer('m4') },
+  ];
+  const jev = { spent: () => 0, ask: async () => ({ answers: scripted.shift(), latencyMs: 1 }) };
+  assert.deepEqual(await runAgent({ jev, io, maxTickets: 1, onEvent: event => events.push(event) }), { handled: 1, stoppedBy: 'max' });
+  assert.deepEqual(io.clicks, ['id1', 'id4']);
+  assert.equal(events.find(event => event.type === 'ticket').decision.mode, 'human');
+});
+
+test('low confidence escalate mark never clicks and skips the ticket', async () => {
+  const io = fakeIo(), events = [];
+  const scripted = [
+    { next: answer('m1'), any_new: noul(1) },
+    { category: answer('refund', 0.5), btn_escalate: answer('m4', 0.84) },
+    { any_new: noul(0) },
+  ];
+  const jev = { spent: () => 0, ask: async () => ({ answers: scripted.shift(), latencyMs: 1 }) };
+  assert.deepEqual(await runAgent({ jev, io, onEvent: event => events.push(event) }), { handled: 0, stoppedBy: 'done' });
+  assert.deepEqual(io.clicks, ['id1']);
+  assert.equal(events[0].type, 'error');
+});
+
+test('low confidence urgent mark skips without a partial category click', async () => {
+  const io = fakeIo(), events = [];
+  const scripted = [
+    { next: answer('m1'), any_new: noul(1) },
+    { category: answer('refund', 0.9), urgency: score(3), btn_refund: answer('m2'), btn_urgent: answer('m3', 0.84) },
+    { any_new: noul(0) },
+  ];
+  const jev = { spent: () => 0, ask: async () => ({ answers: scripted.shift(), latencyMs: 1 }) };
+  assert.deepEqual(await runAgent({ jev, io, onEvent: event => events.push(event) }), { handled: 0, stoppedBy: 'done' });
+  assert.deepEqual(io.clicks, ['id1']);
+  assert.match(events[0].message, /urgent mark/);
+});
+
 test('agent stops after the first ticket without opening another', async () => {
   const io = fakeIo(), events = [], controller = new AbortController();
   let calls = 0;
@@ -175,6 +241,21 @@ test('agent stops after the first ticket without opening another', async () => {
   assert.deepEqual(io.clicks, ['id1', 'id2']);
   assert.deepEqual(events.map(event => event.type), ['ticket', 'stopped']);
   assert.equal(calls, 2);
+});
+
+test('stop after ticket open clears the evidence box', async () => {
+  const io = fakeIo(), controller = new AbortController();
+  let cleared = 0;
+  io.clearBox = async () => { cleared++; };
+  io.wait = async () => controller.abort();
+  const scripted = [
+    { next: answer('m1'), any_new: noul(1) },
+    { category: answer('damaged', 0.9), damage_box: box({ top: 0, bottom: 0.5, left: 0, right: 0.5 }), btn_damaged: answer('m2') },
+  ];
+  const jev = { spent: () => 0, ask: async () => ({ answers: scripted.shift(), latencyMs: 1 }) };
+  assert.deepEqual(await runAgent({ jev, io, signal: controller.signal }), { handled: 0, stoppedBy: 'stopped' });
+  assert.deepEqual(io.clicks, ['id1']);
+  assert.equal(cleared, 1);
 });
 
 test('agent escalates an unknown category mark', async () => {

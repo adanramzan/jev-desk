@@ -9,7 +9,14 @@ import { runAgent } from './core/agent.mjs';
 
 // ---------- Settings ----------
 
-const DEFAULTS = { apiKey: '', budgetUsd: 1, spentUsd: 0, baseUrl: 'https://api.typesafe.ai' };
+const DEFAULTS = { apiKey: '', budgetUsd: 1, spentUsd: 0, baseUrl: 'https://api.typesafe.ai', scopes: { list: '[data-ticket-list]', actions: '[data-ticket-actions]' } };
+
+function validBaseUrl(value) {
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' || (url.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(url.hostname));
+  } catch { return false; }
+}
 
 async function getSettings() {
   const stored = await chrome.storage.local.get(DEFAULTS);
@@ -26,6 +33,7 @@ let settingsChanged = false;
 async function getJev() {
   if (!jevPromise) jevPromise = getSettings().then(settings => {
     if (!settings.apiKey) throw new Error('Set your API key first');
+    if (!validBaseUrl(settings.baseUrl)) throw new Error('Base URL must use HTTPS (or HTTP on localhost)');
     return createJev({
       apiKey: settings.apiKey, baseUrl: settings.baseUrl,
       budgetUsd: settings.budgetUsd, spentUsd: settings.spentUsd,
@@ -118,9 +126,9 @@ function makeIo(tab) {
       } finally { await execInTab(tabId, () => window.jevMarks?.showOverlay?.()); }
       return dataUrl.replace(/^data:image\/\w+;base64,/, '');
     },
-    async addMarks(scope) {
+    async addMarks(scope, { strict = false } = {}) {
       await injectMarks(tabId);
-      return execInTab(tabId, (s) => window.jevMarks.add(s ? { scope: s } : undefined), scope);
+      return execInTab(tabId, (s, strict) => window.jevMarks.add(s ? { scope: s, strict } : undefined), scope, strict);
     },
     async removeMarks() {
       return execInTab(tabId, () => window.jevMarks.remove());
@@ -130,6 +138,9 @@ function makeIo(tab) {
     },
     async box(fracBox, text) {
       return execInTab(tabId, (b, t) => window.jevMarks.box(b, t), fracBox, text);
+    },
+    async clearBox() {
+      return execInTab(tabId, () => window.jevMarks.clearBox());
     },
     async toast(text) {
       return execInTab(tabId, (t) => window.jevMarks.toast(t), text);
@@ -149,10 +160,11 @@ async function runScan() {
     const tab = await getTargetTab();
     const jev = await getJev();
     const io = makeIo(tab);
+    const { scopes } = await getSettings();
     emit({ type: 'scan:start' });
     const startSpend = jev.spent();
     // Step 2: triage the visible ticket (marks on [data-ticket-actions] or whole page)
-    const actionMarks = (await io.addMarks('[data-ticket-actions]')) || [];
+    const actionMarks = (await io.addMarks(scopes.actions)) || [];
     const markScope = actionMarks.length > 0 ? actionMarks : ((await io.addMarks()) || []);
     const markCount = markScope.length;
     if (!markCount) throw new Error('No visible buttons to mark on this page');
@@ -209,12 +221,14 @@ async function startAutopilot() {
     const tab = await getTargetTab();
     const jev = await getJev();
     const io = makeIo(tab);
+    const { scopes } = await getSettings();
     emit({ type: 'autopilot:started' });
     let ticketNumber = 0;
     let pendingEvents = Promise.resolve();
     const result = await runAgent({
       jev,
       io,
+      scopes,
       signal,
       onEvent: event => {
         pendingEvents = pendingEvents.then(async () => {
@@ -267,6 +281,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     return true;
   }
   if (msg.action === 'saveSettings') {
+    if (!validBaseUrl(msg.settings.baseUrl)) { sendResponse({ error: 'Base URL must use HTTPS (or HTTP on localhost)' }); return false; }
     updateSettings(msg.settings).then(() => { if (busy) settingsChanged = true; else jevPromise = null; sendResponse({ ok: true }); });
     return true;
   }

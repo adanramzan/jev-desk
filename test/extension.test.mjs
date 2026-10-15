@@ -315,15 +315,35 @@ test('stop after first ticket leaves later tickets untouched', async t => {
 });
 
 test('scan falls back to visible buttons on a plain web page', async t => {
-  const stub = await startInlineStubJev({ category: choice('billing'), photo: choice('none') });
-  t.after(() => stub.close());
-  const context = await launchExtensionContext(); t.after(() => context.close());
+  const helpdesk = await startServer(0);
+  let stub, context;
+  t.after(async () => { await context?.close(); await stub?.close(); await helpdesk.close(); });
+  stub = await startInlineStubJev({ category: choice('billing'), photo: choice('none') });
+  context = await launchExtensionContext();
   const sw = await getServiceWorker(context);
   await sw.evaluate(baseUrl => chrome.storage.local.set({ apiKey: 'test-key', baseUrl, budgetUsd: 1 }), stub.url);
   const page = context.pages()[0] || await context.newPage();
-  await page.goto('http://example.com').catch(() => {});
+  await page.goto(`${helpdesk.url}/plain-page`);
   await page.setContent('<h1>Plain page</h1><button>One</button><button>Two</button>');
   const result = await sw.evaluate(() => runScan());
   assert.equal(result.decision.category, 'billing');
   assert.equal(await page.locator('.jev-mark').count(), 2);
+});
+
+test('extension settings reject insecure API URLs and keep custom scopes', async t => {
+  const context = await launchExtensionContext(); t.after(() => context.close());
+  const sw = await getServiceWorker(context);
+  const panel = await context.newPage();
+  await panel.goto(`chrome-extension://${new URL(sw.url()).host}/sidepanel.html`);
+  await panel.locator('#settings-panel').evaluate(element => { element.open = true; });
+  await panel.locator('#input-baseurl').fill('http://example.com');
+  await panel.locator('#input-list-scope').fill('#list');
+  await panel.locator('#input-actions-scope').fill('#actions');
+  await panel.locator('#btn-save-settings').click();
+  await panel.waitForFunction(() => document.querySelector('#statusbar')?.textContent?.includes('HTTPS'));
+  assert.equal((await sw.evaluate(() => chrome.storage.local.get('baseUrl'))).baseUrl, undefined);
+  await panel.locator('#input-baseurl').fill('http://127.0.0.1:1234');
+  await panel.locator('#btn-save-settings').click();
+  await panel.waitForFunction(() => document.querySelector('#statusbar')?.textContent === 'Settings saved');
+  assert.deepEqual((await sw.evaluate(() => chrome.storage.local.get('scopes'))).scopes, { list: '#list', actions: '#actions' });
 });

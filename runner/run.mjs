@@ -11,7 +11,7 @@ import { startServer } from '../scripts/serve.mjs';
 const root = fileURLToPath(new URL('..', import.meta.url));
 const marksPath = join(root, 'core/marks.js');
 const labelFor = Object.fromEntries(CATEGORIES.map(([key, label]) => [key, label]));
-const percentile = (values, p) => values.length ? [...values].sort((a, b) => a - b)[Math.ceil(values.length * p) - 1] : 0;
+const percentile = (values, p) => values.length ? [...values].sort((a, b) => a - b)[Math.ceil(values.length * p) - 1] : null;
 const rate = (n, total) => total ? n / total : null;
 
 async function getApiKey() {
@@ -53,7 +53,8 @@ function summarize(events, states, truth, stoppedBy, spentUsd) {
     autoAccuracy: rate(auto.filter(ticket => ticket.correct).length, auto.length),
     autoRate: rate(auto.length, tickets.length), escalationRate: rate(tickets.length - auto.length, tickets.length),
     clickAccuracy: rate(auto.filter(ticket => ticket.category === ticket.decided && ticket.status === 'Triaged').length, auto.length),
-    photoAccuracy: rate(imageTickets.filter(ticket => ticket.photo === ticket.photoTruth).length, imageTickets.length),
+    photoAccuracy: rate(tickets.filter(ticket => ticket.photo === ticket.photoTruth).length, tickets.length),
+    photoTypeAccuracy: rate(imageTickets.filter(ticket => ticket.photo === ticket.photoTruth).length, imageTickets.length),
     perCategory, confusion: tickets.filter(ticket => !ticket.correct).map(({ id, truth, decided }) => ({ id, truth, decided })),
     p50LatencyMs: percentile(tickets.map(ticket => ticket.latencyMs), 0.5),
     p95LatencyMs: percentile(tickets.map(ticket => ticket.latencyMs), 0.95),
@@ -67,8 +68,9 @@ function markdown(report) {
     ['Decision accuracy', pct(report.accuracy)],
     ['Auto accuracy', pct(report.autoAccuracy)], ['Auto rate', pct(report.autoRate)],
     ['Escalation rate', pct(report.escalationRate)], ['Click accuracy', pct(report.clickAccuracy)],
-    ['Photo accuracy (image tickets)', pct(report.photoAccuracy)],
-    ['p50 latency', `${report.p50LatencyMs.toFixed(0)} ms`], ['p95 latency', `${report.p95LatencyMs.toFixed(0)} ms`],
+    ['Photo accuracy (all tickets)', pct(report.photoAccuracy)],
+    ['Photo-type accuracy (image tickets)', pct(report.photoTypeAccuracy)],
+    ['p50 Jev latency', report.p50LatencyMs === null ? 'n/a' : `${report.p50LatencyMs.toFixed(0)} ms`], ['p95 Jev latency', report.p95LatencyMs === null ? 'n/a' : `${report.p95LatencyMs.toFixed(0)} ms`],
     ['Total cost', `$${report.totalCostUsd.toFixed(6)}`], ['Cost per 1k tickets', report.costPer1kUsd === null ? 'n/a' : `$${report.costPer1kUsd.toFixed(4)}`],
   ];
   return `# Jev Desk eval\n\nHandled ${report.handled} of ${report.totalTickets} tickets · Stopped by: ${report.stoppedBy}\n\n| Metric | Value |\n| --- | ---: |\n${rows.map(row => `| ${row.join(' | ')} |`).join('\n')}\n\n## Per category\n\n| Category | Count | Accuracy |\n| --- | ---: | ---: |\n${Object.entries(report.perCategory).map(([key, value]) => `| ${labelFor[key]} | ${value.count} | ${pct(value.accuracy)} |`).join('\n')}\n\n## Confusion\n\n${report.confusion.length ? report.confusion.map(item => `- #${item.id}: ${item.truth} → ${item.decided}`).join('\n') : 'None'}\n\n## Duplicate ticket IDs\n\n${report.duplicates.length ? report.duplicates.map(id => `- #${id}`).join('\n') : 'None'}\n\n## Errors\n\n${report.errors.length ? report.errors.map(error => `- ${error}`).join('\n') : 'None'}\n`;
@@ -96,7 +98,7 @@ export async function run({ eval: evaluate = false, headed = !evaluate, limit = 
     await onPage?.(page);
     let lastTicketId;
     const io = {
-      addMarks: scope => page.evaluate(scope => window.jevMarks.add({ scope }), scope),
+      addMarks: (scope, { strict } = {}) => page.evaluate(({ scope, strict }) => window.jevMarks.add({ scope, strict }), { scope, strict }),
       removeMarks: () => page.evaluate(() => window.jevMarks.remove()),
       click: async id => {
         const ticketId = await page.evaluate(id => document.querySelector(`[data-jev-mark="${id}"]`)?.closest('[data-ticket-id]')?.dataset.ticketId, id);
@@ -109,6 +111,7 @@ export async function run({ eval: evaluate = false, headed = !evaluate, limit = 
         finally { await page.evaluate(() => window.jevMarks.showOverlay()); }
       },
       box: (box, caption) => page.evaluate(([box, caption]) => window.jevMarks.box(box, caption), [box, caption]),
+      clearBox: () => page.evaluate(() => window.jevMarks.clearBox()),
       toast: message => page.evaluate(message => window.jevMarks.toast(message), message),
       wait: ms => page.waitForTimeout(ms),
     };
@@ -164,7 +167,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
       budgetUsd: numberFlag('--budget', 4, value => value > 0),
       record: args.includes('--record') ? args[args.indexOf('--record') + 1] : undefined,
     };
-    run(options).then(({ report }) => { if (report.stoppedBy === 'error') process.exitCode = 1; })
+    run(options).then(({ report }) => { if (report.stoppedBy === 'error' || (report.handled < report.totalTickets && report.stoppedBy !== 'max')) process.exitCode = 1; })
       .catch(error => { console.error(error); process.exitCode = 1; });
   } catch (error) {
     console.error(error);

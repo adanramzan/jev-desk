@@ -1,22 +1,23 @@
 import { BudgetError, CATEGORIES, JevError, decide, markQuestion, screenshotState, triageQuestions } from './jev.mjs';
 
-export async function runAgent({ jev, io, thresholds, maxTickets = Infinity, onEvent = () => {}, signal }) {
+export async function runAgent({ jev, io, thresholds, maxTickets = Infinity, scopes = { list: '[data-ticket-list]', actions: '[data-ticket-actions]' }, onEvent = () => {}, signal }) {
   let handled = 0;
   const skipped = new Set();
   const markId = (choice, marks) => {
     const index = /^m([1-9]\d*)$/.exec(choice?.choice ?? '')?.[1];
-    return index ? marks[Number(index) - 1]?.id : undefined;
+    return choice?.confidence >= 0.85 && index ? marks[Number(index) - 1]?.id : undefined;
   };
   const stop = (stoppedBy) => ({ handled, stoppedBy });
-  const stopped = () => { if (signal?.aborted) { onEvent({ type: 'stopped' }); return true; } return false; };
+  const stopped = async () => { if (signal?.aborted) { await io.clearBox?.(); onEvent({ type: 'stopped' }); return true; } return false; };
 
   while (handled < maxTickets) {
-    if (stopped()) return stop('stopped');
+    if (await stopped()) return stop('stopped');
     let listAnswers, listLatency, startSpend = jev.spent();
     let currentMark;
     try {
-      const marks = await io.addMarks('[data-ticket-list]');
+      const marks = await io.addMarks(scopes.list, { strict: true });
       try {
+        if (!marks.length) throw new Error('Helpdesk regions not found — Autopilot needs [data-ticket-list] and [data-ticket-actions] (or configured selectors)');
         const except = skipped.size ? ` Ignore the rows tagged ${[...skipped].join(', ')}.` : '';
         const result = await jev.ask({ ...screenshotState(await io.screenshot()), questions: {
           next: markQuestion('Which red label is on the topmost ticket row whose status is New in `screen`?' + except, marks.length),
@@ -32,13 +33,15 @@ export async function runAgent({ jev, io, thresholds, maxTickets = Infinity, onE
         if (!id) throw new Error('Unknown ticket mark');
         currentMark = listAnswers.next.choice;
         if (skipped.has(currentMark)) throw new Error('Jev selected a previously skipped ticket');
-        if (stopped()) return stop('stopped');
+        if (await stopped()) return stop('stopped');
         await io.click(id);
       } finally { await io.removeMarks(); }
 
       await io.wait(150);
-      const actionMarks = await io.addMarks('[data-ticket-actions]');
+      if (await stopped()) return stop('stopped');
+      const actionMarks = await io.addMarks(scopes.actions, { strict: true });
       try {
+        if (!actionMarks.length) throw new Error('Helpdesk regions not found — Autopilot needs [data-ticket-list] and [data-ticket-actions] (or configured selectors)');
         const questions = triageQuestions();
         for (const [key, label] of CATEGORIES) questions[`btn_${key}`] = markQuestion('Which red label is on the "' + label + '" button in `screen`?', actionMarks.length);
         questions.btn_urgent = markQuestion('Which red label is on the "Urgent" button in `screen`?', actionMarks.length);
@@ -56,13 +59,18 @@ export async function runAgent({ jev, io, thresholds, maxTickets = Infinity, onE
           onEvent({ type: 'error', message: 'Unknown category mark; escalating' });
         }
         if (decision.mode === 'auto') {
-          if (stopped()) return stop('stopped');
+          const urgentId = decision.urgent ? markId(result.answers.btn_urgent, actionMarks) : undefined;
+          if (decision.urgent && !urgentId) {
+            onEvent({ type: 'error', message: 'Unknown urgent mark' });
+            skipped.add(currentMark);
+            continue;
+          }
+          if (await stopped()) return stop('stopped');
           await io.click(categoryId);
           clicked.push(CATEGORIES.find(([key]) => key === decision.category)[1]);
           if (decision.urgent) {
-            const urgentId = markId(result.answers.btn_urgent, actionMarks);
-            if (urgentId) { if (stopped()) return stop('stopped'); await io.click(urgentId); clicked.push('Urgent'); }
-            else onEvent({ type: 'error', message: 'Unknown urgent mark' });
+            if (await stopped()) return stop('stopped');
+            await io.click(urgentId); clicked.push('Urgent');
           }
         } else {
           const escalateId = markId(result.answers.btn_escalate, actionMarks);
@@ -71,7 +79,7 @@ export async function runAgent({ jev, io, thresholds, maxTickets = Infinity, onE
             skipped.add(currentMark);
             continue;
           }
-          if (stopped()) return stop('stopped');
+          if (await stopped()) return stop('stopped');
           await io.click(escalateId);
           clicked.push('Escalate to human');
         }

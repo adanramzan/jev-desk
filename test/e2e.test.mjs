@@ -11,7 +11,7 @@ import { startStubJev } from './stub-jev.mjs';
 
 const choice = value => ({ type: 'choice', choice: value, confidence: 0.97, probabilities: { [value]: 0.97 } });
 
-async function fixture(t, { wrongId, outOfOrder = false } = {}) {
+async function fixture(t, { wrongId, wrongPhotoId, outOfOrder = false } = {}) {
   const dir = await mkdtemp(join(tmpdir(), 'jev-desk-e2e-'));
   const tickets = JSON.parse(await readFile(new URL('../helpdesk/tickets.json', import.meta.url)));
   let page;
@@ -29,7 +29,7 @@ async function fixture(t, { wrongId, outOfOrder = false } = {}) {
     }
     const truth = tickets.find(ticket => ticket.id === snapshot.activeId).truth;
     const answers = {
-      category: choice(snapshot.activeId === wrongId ? (truth.category === 'refund' ? 'shipping' : 'refund') : truth.category), photo: choice(truth.photo),
+      category: choice(snapshot.activeId === wrongId ? (truth.category === 'refund' ? 'shipping' : 'refund') : truth.category), photo: choice(snapshot.activeId === wrongPhotoId ? 'receipt' : truth.photo),
       urgency: { type: 'score', score: 1.4, confidence: 0.5, legend: {}, probabilities: {} },
       refund: { type: 'noul', noul: 0.12 },
       damage_box: { type: 'box', box: { top: 0.2, bottom: 0.5, left: 0.3, right: 0.6 }, confidence: 0.9 },
@@ -57,6 +57,18 @@ test('runner triages five real helpdesk tickets and writes accurate eval and led
   assert.ok(JSON.parse(await readFile(join(dir, 'ledger.json'))).spentUsd > 0);
 });
 
+test('runner reports photo accuracy across all tickets and image tickets separately', async t => {
+  const { dir, stub, onPage } = await fixture(t, { wrongPhotoId: 1002 });
+  const { report, reportPath } = await run({ eval: true, limit: 2, baseUrl: stub.url, apiKey: 'test', ledgerPath: join(dir, 'ledger.json'), reportsDir: dir, onPage, log: () => {} });
+  assert.equal(report.photoAccuracy, 0.5);
+  assert.equal(report.photoTypeAccuracy, 1);
+  const saved = JSON.parse(await readFile(reportPath.replace(/\.md$/, '.json')));
+  assert.equal(saved.photoAccuracy, 0.5);
+  assert.equal(saved.photoTypeAccuracy, 1);
+  assert.match(await readFile(reportPath, 'utf8'), /Photo accuracy \(all tickets\) \| 50\.0%/);
+  assert.match(await readFile(reportPath, 'utf8'), /Photo-type accuracy \(image tickets\) \| 100\.0%/);
+});
+
 test('runner stops at the spend budget and still writes a report', async t => {
   const { dir, stub, onPage } = await fixture(t);
   const { report, reportPath } = await run({ eval: true, limit: 5, budgetUsd: 0.000001, baseUrl: stub.url, apiKey: 'test', ledgerPath: join(dir, 'ledger.json'), reportsDir: dir, onPage, log: () => {} });
@@ -65,7 +77,11 @@ test('runner stops at the spend budget and still writes a report', async t => {
   assert.equal(report.accuracy, null);
   assert.equal(report.autoAccuracy, null);
   assert.equal(report.photoAccuracy, null);
+  assert.equal(report.photoTypeAccuracy, null);
+  assert.equal(report.p50LatencyMs, null);
+  assert.equal(report.p95LatencyMs, null);
   assert.match(await readFile(reportPath, 'utf8'), /Handled 0 of 50 tickets · Stopped by: budget[\s\S]*Decision accuracy \| n\/a/);
+  assert.match(await readFile(reportPath, 'utf8'), /p50 Jev latency \| n\/a/);
   assert.equal(stub.calls.length, 1);
   assert.ok((await stat(reportPath)).size > 0);
 });

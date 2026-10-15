@@ -41,6 +41,8 @@ function loadSettings() {
     document.getElementById('input-budget').value = settings.budgetUsd ?? 1;
     document.getElementById('stat-budget').textContent = ` / $${(settings.budgetUsd ?? 1).toFixed(2)}`;
     document.getElementById('input-baseurl').value = settings.baseUrl || 'https://api.typesafe.ai';
+    document.getElementById('input-list-scope').value = settings.scopes?.list || '[data-ticket-list]';
+    document.getElementById('input-actions-scope').value = settings.scopes?.actions || '[data-ticket-actions]';
     updateSpend(settings.spentUsd || 0);
   });
 }
@@ -52,8 +54,13 @@ function saveSettings() {
     apiKey: document.getElementById('input-apikey').value.trim(),
     budgetUsd,
     baseUrl: document.getElementById('input-baseurl').value.trim() || 'https://api.typesafe.ai',
+    scopes: {
+      list: document.getElementById('input-list-scope').value.trim() || '[data-ticket-list]',
+      actions: document.getElementById('input-actions-scope').value.trim() || '[data-ticket-actions]',
+    },
   };
-  chrome.runtime.sendMessage({ action: 'saveSettings', settings }, () => {
+  chrome.runtime.sendMessage({ action: 'saveSettings', settings }, (response) => {
+    if (response?.error) { setStatus(response.error); return; }
     document.getElementById('stat-budget').textContent = ` / $${budgetUsd.toFixed(2)}`;
     setStatus('Settings saved');
   });

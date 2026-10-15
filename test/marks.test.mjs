@@ -26,3 +26,15 @@ test('evidence box is cleared when another ticket row is opened, kept on action 
     await browser.close();
   }
 });
+
+test('strict missing scope leaves unrelated buttons unmarked', async () => {
+  const browser = await chromium.launch();
+  try {
+    const page = await browser.newPage();
+    await page.setContent('<button>Dangerous unrelated action</button>');
+    await page.addScriptTag({ path: marksPath });
+    assert.deepEqual(await page.evaluate(() => window.jevMarks.add({ scope: '[data-ticket-list]', strict: true })), []);
+    assert.equal(await page.locator('.jev-mark').count(), 0);
+    assert.equal(await page.locator('[data-jev-mark]').count(), 0);
+  } finally { await browser.close(); }
+});

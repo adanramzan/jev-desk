@@ -31,7 +31,8 @@
       const style = getComputedStyle(element);
       if (!rect.width || !rect.height || rect.bottom <= 0 || rect.right <= 0 || rect.top >= innerHeight || rect.left >= innerWidth || style.visibility === 'hidden' || style.display === 'none') continue;
       // Skip elements that are scrolled out of a container or covered: what's at their centre must be them.
-      const hit = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
+      const vx = (Math.max(0, rect.left) + Math.min(innerWidth, rect.right)) / 2, vy = (Math.max(0, rect.top) + Math.min(innerHeight, rect.bottom)) / 2;
+      const hit = document.elementFromPoint(vx, vy); // centre of the part inside the window
       if (!hit || !element.contains(hit)) continue;
       const id = `m${marked.length + 1}`;
       const label = overlay('jev-mark', {

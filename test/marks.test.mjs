@@ -69,3 +69,25 @@ test('labels of tall rows sit inside the row, labels of small buttons on their c
     assert.equal(btnLabel, btn, 'button label on the top-left corner');
   } finally { await browser.close(); }
 });
+
+test('strict mode with an empty scope marks nothing', async () => {
+  const browser = await chromium.launch();
+  try {
+    const page = await browser.newPage();
+    await page.setContent('<button>Delete everything</button>');
+    await page.addScriptTag({ path: marksPath });
+    assert.deepEqual(await page.evaluate(() => window.jevMarks.add({ scope: '', strict: true })), []);
+  } finally { await browser.close(); }
+});
+
+test('a row that is mostly scrolled into view is still marked', async () => {
+  const browser = await chromium.launch();
+  try {
+    const page = await browser.newPage({ viewport: { width: 400, height: 300 } });
+    // second row spans 250-350: its centre (300) is outside the 300px window, but 50px of it is visible
+    await page.setContent('<div style="height:250px"></div><div data-ticket-id="2" style="height:100px">Row 2</div>');
+    await page.addScriptTag({ path: marksPath });
+    const marks = await page.evaluate(() => window.jevMarks.add());
+    assert.equal(marks.length, 1);
+  } finally { await browser.close(); }
+});

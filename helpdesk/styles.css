@@ -1,0 +1,295 @@
+/* ========================================================
+   Helpline — styles.css
+   Modern SaaS helpdesk: neutral greys, blue accent, dense rows
+   ======================================================== */
+
+/* ---------- Reset & base ---------- */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --accent:       #2563eb;
+  --accent-light: #dbeafe;
+  --bg:           #f5f6f8;
+  --surface:      #ffffff;
+  --border:       #e2e5ea;
+  --text:         #1e2328;
+  --text-sec:     #5f6b7a;
+  --text-muted:   #8b95a3;
+  --danger:       #dc2626;
+  --danger-light: #fee2e2;
+  --green:        #16a34a;
+  --green-light:  #dcfce7;
+  --amber:        #d97706;
+  --amber-light:  #fef3c7;
+  --radius:       5px;
+  --font:         'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+html, body {
+  font-family: var(--font);
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text);
+  background: var(--bg);
+  height: 100%;
+  overflow: hidden;
+}
+
+/* ---------- Top bar ---------- */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 42px;
+  padding: 0 16px;
+  background: #1e2328;
+  color: #fff;
+  font-size: 13px;
+}
+.topbar-brand { display: flex; align-items: center; gap: 8px; }
+.topbar-logo  { font-size: 20px; opacity: .85; }
+.topbar-title { font-weight: 600; letter-spacing: .3px; }
+.topbar-meta  { color: #a0aab5; font-size: 12px; }
+
+/* ---------- Layout: two-pane ---------- */
+.layout {
+  display: flex;
+  height: calc(100vh - 42px);
+}
+
+/* Left: ticket list */
+.list-pane {
+  width: 380px;
+  min-width: 340px;
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.list-header {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.list-header h2 { font-size: 14px; font-weight: 600; }
+.list-body {
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* ---------- Ticket row ---------- */
+.ticket-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background .1s;
+  min-height: 0;
+}
+.ticket-row:hover { background: #f0f2f5; }
+.ticket-row.active { background: var(--accent-light); }
+
+.ticket-row-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.ticket-row-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.ticket-subject {
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+}
+.ticket-time {
+  color: var(--text-muted);
+  font-size: 11px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.ticket-row-bottom {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ticket-from {
+  color: var(--text-sec);
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---------- Chips / badges ---------- */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 7px;
+  border-radius: 9px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.chip-new       { background: var(--accent-light); color: var(--accent); }
+.chip-triaged   { background: var(--green-light); color: var(--green); }
+.chip-escalated { background: var(--amber-light); color: var(--amber); }
+
+.chip-category {
+  background: #f0f2f5;
+  color: var(--text-sec);
+  font-size: 10px;
+  padding: 1px 6px;
+}
+
+.badge-urgent {
+  color: var(--danger);
+  font-weight: 700;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+.badge-attachment {
+  color: var(--text-muted);
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+/* ---------- Detail pane ---------- */
+.detail-pane {
+  flex: 1;
+  background: var(--bg);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+.detail-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+.detail-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 18px 24px 14px;
+  gap: 12px;
+}
+.detail-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.detail-subject { font-size: 18px; font-weight: 600; }
+.detail-from    { color: var(--text-sec); font-size: 13px; }
+.detail-time    { color: var(--text-muted); font-size: 12px; }
+
+.detail-body {
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.6;
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+}
+
+.detail-images {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.detail-images img {
+  max-height: 260px;
+  max-width: 100%;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  object-fit: contain;
+}
+
+/* ---------- Action bar ---------- */
+.detail-actions {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  flex-wrap: nowrap;
+  margin-top: auto;
+}
+
+.action-sep {
+  width: 1px;
+  height: 24px;
+  background: var(--border);
+  margin: 0 4px;
+  flex-shrink: 0;
+}
+
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  padding: 0 9px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 11.5px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .1s, border-color .1s;
+}
+.action-btn:hover  { background: #f0f2f5; border-color: #ccd0d5; }
+.action-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* Category button in its active state */
+.action-btn.active-category {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+/* Urgent toggle */
+.action-btn-urgent {
+  composes: action-btn;
+  color: var(--text-sec);
+}
+.action-btn-urgent[aria-pressed="true"] {
+  background: var(--danger-light);
+  color: var(--danger);
+  border-color: var(--danger);
+  font-weight: 600;
+}
+
+/* Escalate */
+.action-btn-escalate {
+  composes: action-btn;
+}
+.action-btn-escalate.active-escalate {
+  background: var(--amber-light);
+  color: var(--amber);
+  border-color: var(--amber);
+}

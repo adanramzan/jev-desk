@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Jev Desk</title>
+  <link rel="stylesheet" href="sidepanel.css">
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-brand">
+      <span class="header-logo">⬡</span>
+      <span class="header-title">Jev Desk</span>
+    </div>
+    <div class="header-stats">
+      <span class="stat" id="stat-spend">$0.000</span>
+      <span class="stat-sep">·</span>
+      <span class="stat" id="stat-rate">0 t/min</span>
+    </div>
+  </header>
+
+  <!-- Settings (collapsible) -->
+  <details class="settings" id="settings-panel">
+    <summary class="settings-toggle">Settings</summary>
+    <div class="settings-body">
+      <label class="field">
+        <span class="field-label">API Key</span>
+        <input type="password" id="input-apikey" class="field-input" placeholder="sk-…" autocomplete="off">
+      </label>
+      <label class="field">
+        <span class="field-label">Budget (USD)</span>
+        <input type="number" id="input-budget" class="field-input" value="1" min="0.01" step="0.01">
+      </label>
+      <label class="field">
+        <span class="field-label">Base URL</span>
+        <input type="text" id="input-baseurl" class="field-input" value="https://api.typesafe.ai" placeholder="https://api.typesafe.ai">
+      </label>
+      <button class="btn btn-secondary btn-sm" id="btn-save-settings">Save</button>
+    </div>
+  </details>
+
+  <!-- Controls -->
+  <div class="controls">
+    <button class="btn btn-primary" id="btn-scan">Scan this ticket</button>
+    <button class="btn btn-secondary" id="btn-autopilot" data-state="off">Autopilot</button>
+  </div>
+
+  <!-- Board (lanes) -->
+  <div class="board" id="board">
+    <!-- Lanes rendered by JS -->
+  </div>
+
+  <!-- Status bar -->
+  <div class="statusbar" id="statusbar">Ready</div>
+
+  <script src="sidepanel.js"></script>
+</body>
+</html>

@@ -71,6 +71,32 @@ test('Jev budget guard prevents a request', async () => {
   assert.equal(calls, 0);
 });
 
+test('Jev rejects invalid budgets at creation', () => {
+  for (const budgetUsd of [undefined, 0, -1, NaN, Infinity, '1']) {
+    assert.throws(() => createJev({ apiKey: 'secret', budgetUsd }), /budgetUsd/);
+  }
+});
+
+test('Jev does not retry a billed response when onSpend throws', async () => {
+  let calls = 0;
+  const failure = new Error('ledger failed');
+  const jev = createJev({ apiKey: 'secret', budgetUsd: 1, sleep: async () => {},
+    fetchImpl: async () => { calls++; return ok(); }, onSpend: () => { throw failure; } });
+  await assert.rejects(jev.ask({}), error => error === failure);
+  assert.equal(calls, 1);
+  assert.equal(jev.spent(), 0.000042);
+});
+
+test('Jev charges 5000 tokens when successful usage lacks input tokens', async () => {
+  const spends = [];
+  const jev = createJev({ apiKey: 'secret', budgetUsd: 1,
+    fetchImpl: async () => ({ ok: true, json: async () => ({ answers: {}, usage: {} }) }),
+    onSpend: (...args) => spends.push(args) });
+  await jev.ask({});
+  assert.ok(Math.abs(jev.spent() - 0.00021) < 1e-12);
+  assert.deepEqual(spends, [[jev.spent(), jev.spent()]]);
+});
+
 test('Jev retries 500 and 429, then succeeds', async () => {
   for (const status of [500, 429]) {
     let calls = 0;
@@ -145,6 +171,25 @@ test('agent escalates an unknown category mark', async () => {
   assert.deepEqual(await runAgent({ jev, io, maxTickets: 1, onEvent: e => events.push(e) }), { handled: 1, stoppedBy: 'max' });
   assert.deepEqual(io.clicks, ['id1', 'id4']);
   assert.equal(events.find(e => e.type === 'ticket').decision.mode, 'human');
+});
+
+test('agent skips an unknown escalate mark and continues to the next ticket', async () => {
+  const io = fakeIo(), events = [], prompts = [];
+  const scripted = [
+    { next: answer('m1'), any_new: noul(1) },
+    { category: answer('refund', 0.5), btn_escalate: answer('m99') },
+    { next: answer('m2'), any_new: noul(1) },
+    { category: answer('refund', 0.5), btn_escalate: answer('m4') },
+    { any_new: noul(0) },
+  ];
+  const jev = { spent: () => 0, ask: async ({ questions }) => {
+    prompts.push(questions);
+    return { answers: scripted.shift(), latencyMs: 1 };
+  } };
+  assert.deepEqual(await runAgent({ jev, io, onEvent: e => events.push(e) }), { handled: 1, stoppedBy: 'done' });
+  assert.match(prompts[2].next.instructions, /m1/);
+  assert.deepEqual(io.clicks, ['id1', 'id2', 'id4']);
+  assert.deepEqual(events.map(e => e.type), ['error', 'ticket', 'done']);
 });
 
 test('agent stops on budget and respects maxTickets', async () => {

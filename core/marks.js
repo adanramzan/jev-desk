@@ -1,6 +1,7 @@
 (() => {
+  if (window.jevMarks) return;
   let marked = [];
-  const root = document.createElement('div');
+  const root = document.getElementById('jev-overlay') || document.createElement('div');
   root.id = 'jev-overlay';
   Object.assign(root.style, { position: 'fixed', inset: '0', zIndex: '2147483647', pointerEvents: 'none' });
 
@@ -56,6 +57,7 @@
     return true;
   }
   function box(fracBox, text) {
+    for (const old of root.querySelectorAll('.jev-box')) old.remove();
     const [x, y, w, h] = Array.isArray(fracBox) ? fracBox : [fracBox.x, fracBox.y, fracBox.w, fracBox.h];
     const el = overlay('jev-box', {
       left: `${x * innerWidth}px`, top: `${y * innerHeight}px`, width: `${w * innerWidth}px`, height: `${h * innerHeight}px`,

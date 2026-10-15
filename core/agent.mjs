@@ -62,7 +62,11 @@ export async function runAgent({ jev, io, thresholds, maxTickets = Infinity, onE
           }
         } else {
           const escalateId = markId(result.answers.btn_escalate, actionMarks);
-          if (!escalateId) throw new Error('Unknown escalate mark');
+          if (!escalateId) {
+            onEvent({ type: 'error', message: 'Unknown escalate mark' });
+            skipped.add(currentMark);
+            continue;
+          }
           await io.click(escalateId);
           clicked.push('Escalate to human');
         }

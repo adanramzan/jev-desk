@@ -16,11 +16,13 @@ export const CATEGORIES = [
 ];
 
 export function createJev({ apiKey, baseUrl = 'https://api.typesafe.ai', model = MODEL, budgetUsd, spentUsd = 0, onSpend = () => {}, fetchImpl = fetch, sleep = ms => new Promise(resolve => setTimeout(resolve, ms)) }) {
+  if (typeof budgetUsd !== 'number' || !Number.isFinite(budgetUsd) || budgetUsd <= 0) throw new Error('budgetUsd must be a finite positive number');
   return {
     spent: () => spentUsd,
     async ask({ state, questions, assets }) {
       if (spentUsd >= budgetUsd) throw new BudgetError('Jev budget exhausted');
       const started = performance.now();
+      let data;
       for (let attempt = 0; attempt < 3; attempt++) {
         try {
           const response = await fetchImpl(`${baseUrl.replace(/\/$/, '')}/v1/systemone`, {
@@ -29,16 +31,13 @@ export function createJev({ apiKey, baseUrl = 'https://api.typesafe.ai', model =
             body: JSON.stringify({ model, state, questions, assets }),
             signal: AbortSignal.timeout(20_000),
           });
-          const data = response.ok ? await response.json() : await response.json().catch(() => ({}));
+          data = response.ok ? await response.json() : await response.json().catch(() => ({}));
           if (!response.ok) {
             const error = new JevError(data.detail?.message || data.message || data.error?.message || `Jev HTTP ${response.status}`, response.status);
             if (response.status < 500 && response.status !== 429) throw error;
             if (attempt === 2) throw error;
           } else {
-            const deltaUsd = (data.usage?.input_tokens || 0) * PRICE_PER_INPUT_TOKEN;
-            spentUsd += deltaUsd;
-            onSpend(spentUsd, deltaUsd);
-            return { answers: data.answers, usage: data.usage, latencyMs: performance.now() - started, model: data.model || model };
+            break;
           }
         } catch (error) {
           if (error instanceof JevError && (error.status < 500 && error.status !== 429 || attempt === 2)) throw error;
@@ -46,6 +45,10 @@ export function createJev({ apiKey, baseUrl = 'https://api.typesafe.ai', model =
         }
         await sleep(attempt === 0 ? 500 : 1000);
       }
+      const deltaUsd = (data.usage?.input_tokens ?? 5000) * PRICE_PER_INPUT_TOKEN;
+      spentUsd += deltaUsd;
+      await onSpend(spentUsd, deltaUsd);
+      return { answers: data.answers, usage: data.usage, latencyMs: performance.now() - started, model: data.model || model };
     },
   };
 }

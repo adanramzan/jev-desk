@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, readFile, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { chromium } from 'playwright';
 import { run } from '../runner/run.mjs';
 import { startStubJev } from './stub-jev.mjs';
 
@@ -59,4 +60,33 @@ test('runner stops at the spend budget and still writes a report', async t => {
 
 test('runner rejects an invalid budget before opening the helpdesk', async () => {
   await assert.rejects(run({ apiKey: 'test', baseUrl: 'http://127.0.0.1:1', budgetUsd: Number.NaN }), /budgetUsd/);
+  await assert.rejects(run({ apiKey: 'test', baseUrl: 'http://127.0.0.1:1', budgetUsd: 0 }), /budgetUsd/);
+});
+
+test('marks injection preserves the overlay and replaces an earlier box', async t => {
+  const browser = await chromium.launch();
+  t.after(() => browser.close());
+  const page = await browser.newPage();
+  const marksScript = await readFile(new URL('../core/marks.js', import.meta.url), 'utf8');
+  await page.setContent('<button>Ticket</button>');
+  await page.addScriptTag({ content: marksScript });
+  await page.evaluate(() => {
+    window.jevMarks.add();
+    window.jevMarks.box([0, 0, 0.5, 0.5], 'first');
+    window.originalJevMarks = window.jevMarks;
+    window.originalOverlay = document.getElementById('jev-overlay');
+  });
+  await page.addScriptTag({ content: marksScript });
+  assert.deepEqual(await page.evaluate(() => ({
+    roots: document.querySelectorAll('#jev-overlay').length,
+    labels: document.querySelectorAll('.jev-mark').length,
+    boxes: document.querySelectorAll('.jev-box').length,
+    sameApi: window.jevMarks === window.originalJevMarks,
+    sameRoot: document.getElementById('jev-overlay') === window.originalOverlay,
+  })), { roots: 1, labels: 1, boxes: 1, sameApi: true, sameRoot: true });
+  await page.evaluate(() => window.jevMarks.box([0.5, 0.5, 0.2, 0.2], 'second'));
+  assert.deepEqual(await page.evaluate(() => ({
+    boxes: document.querySelectorAll('.jev-box').length,
+    caption: document.querySelector('.jev-box')?.textContent,
+  })), { boxes: 1, caption: 'second' });
 });

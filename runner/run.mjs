@@ -68,7 +68,7 @@ function markdown(report) {
 }
 
 export async function run({ eval: evaluate = false, headed = !evaluate, limit = Infinity, slow = 0, budgetUsd = 4, baseUrl, apiKey, ledgerPath = '.jev-spend.json', reportsDir = 'reports', log = console.log, onPage } = {}) {
-  if (typeof budgetUsd !== 'number' || !Number.isFinite(budgetUsd) || budgetUsd < 0) throw new Error('budgetUsd must be a finite nonnegative number');
+  if (typeof budgetUsd !== 'number' || !Number.isFinite(budgetUsd) || budgetUsd <= 0) throw new Error('budgetUsd must be a finite positive number');
   const key = apiKey || await getApiKey();
   if (!key) throw new Error('JEV_API_KEY is required');
   const ledgerFile = resolve(ledgerPath);

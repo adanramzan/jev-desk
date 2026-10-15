@@ -1,0 +1,15 @@
+{
+  "name": "jev-desk",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "serve": "node scripts/serve.mjs",
+    "demo": "node runner/run.mjs --headed --slow 250",
+    "eval": "node runner/run.mjs --eval",
+    "build:ext": "mkdir -p extension/core && cp core/jev.mjs core/agent.mjs core/marks.js extension/core/"
+  },
+  "devDependencies": {
+    "playwright": "^1.64.1"
+  }
+}

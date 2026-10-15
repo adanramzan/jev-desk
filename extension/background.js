@@ -20,14 +20,34 @@ async function updateSettings(patch) {
   await chrome.storage.local.set(patch);
 }
 
+let jevPromise;
+let busy = false;
+let settingsChanged = false;
+async function getJev() {
+  if (!jevPromise) jevPromise = getSettings().then(settings => {
+    if (!settings.apiKey) throw new Error('Set your API key first');
+    return createJev({
+      apiKey: settings.apiKey, baseUrl: settings.baseUrl,
+      budgetUsd: settings.budgetUsd, spentUsd: settings.spentUsd,
+      onSpend: async total => {
+        await updateSettings({ spentUsd: total });
+        emit({ type: 'spend', spentUsd: total });
+      },
+    });
+  }).catch(error => { jevPromise = null; throw error; });
+  return jevPromise;
+}
+
 // ---------- Side panel setup ----------
 
-chrome.sidePanel?.setPanelBehavior?.({ openPanelOnActionClick: true })?.catch?.(() => {});
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(() => {});
+});
 
 // ---------- Emit events to side panel & test listeners ----------
 
 function emit(event) {
-  const payload = { type: 'event', ...event };
+  const payload = { type: 'event', event };
   globalThis.lastEvent = payload;
   if (!globalThis.events) globalThis.events = [];
   globalThis.events.push(payload);
@@ -37,17 +57,9 @@ function emit(event) {
 // ---------- Tab helpers ----------
 
 async function getTargetTab() {
-  const allTabs = await chrome.tabs.query({});
-  // Prioritize web content tabs (exclude extension pages, chrome://, about:, etc.)
-  const contentTabs = allTabs.filter(t => t.url && !t.url.startsWith('chrome') && !t.url.startsWith('about:'));
-  
-  const activeContentTab = contentTabs.find(t => t.active);
-  if (activeContentTab) return activeContentTab;
-
-  if (contentTabs.length > 0) return contentTabs[0];
-
-  const [activeCur] = await chrome.tabs.query({ active: true, currentWindow: true });
-  return activeCur || allTabs[0];
+  const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+  if (!tab?.id || !/^https?:\/\//.test(tab.url || '')) throw new Error('Open a helpdesk web tab first');
+  return tab;
 }
 
 async function injectMarks(tabId) {
@@ -81,7 +93,7 @@ async function readTitle(tabId) {
       || document.querySelector('h1, h2')?.textContent?.trim()
       || '';
   }).catch(() => '');
-  return title || 'Untitled ticket';
+  return title || '';
 }
 
 // ---------- IO adapter for the agent ----------
@@ -89,12 +101,21 @@ async function readTitle(tabId) {
 function makeIo(tab) {
   const tabId = tab.id;
   const windowId = tab.windowId;
+  let lastCapture = 0;
   return {
     async screenshot() {
-      // Hide overlays before capture
+      const remaining = 600 - (Date.now() - lastCapture);
+      if (remaining > 0) await new Promise(resolve => setTimeout(resolve, remaining));
+      const [active] = await chrome.tabs.query({ active: true, windowId });
+      if (active?.id !== tabId) throw new Error('Switch back to the helpdesk tab');
       await execInTab(tabId, () => window.jevMarks?.hideOverlay?.());
-      const dataUrl = await chrome.tabs.captureVisibleTab(windowId, { format: 'png' });
-      await execInTab(tabId, () => window.jevMarks?.showOverlay?.());
+      let dataUrl;
+      try {
+        const [stillActive] = await chrome.tabs.query({ active: true, windowId });
+        if (stillActive?.id !== tabId) throw new Error('Switch back to the helpdesk tab');
+        dataUrl = await chrome.tabs.captureVisibleTab(windowId, { format: 'png' });
+        lastCapture = Date.now();
+      } finally { await execInTab(tabId, () => window.jevMarks?.showOverlay?.()); }
       return dataUrl.replace(/^data:image\/\w+;base64,/, '');
     },
     async addMarks(scope) {
@@ -122,36 +143,19 @@ function makeIo(tab) {
 // ---------- Scan: triage a single visible ticket ----------
 
 async function runScan() {
-  const tab = await getTargetTab();
-  if (!tab?.id) { emit({ event: 'error', message: 'No active tab' }); return; }
-
-  const settings = await getSettings();
-  const isLocal = settings.baseUrl?.includes('localhost') || settings.baseUrl?.includes('127.0.0.1');
-  if (!settings.apiKey && !isLocal) {
-    emit({ event: 'error', message: 'Set your API key first' });
-    return;
-  }
-  const apiKey = settings.apiKey || 'test-key';
-
-  const jev = createJev({
-    apiKey,
-    baseUrl: settings.baseUrl,
-    budgetUsd: settings.budgetUsd,
-    spentUsd: settings.spentUsd,
-    onSpend: async (total) => {
-      await updateSettings({ spentUsd: total });
-      emit({ event: 'spend', spentUsd: total });
-    },
-  });
-
-  const io = makeIo(tab);
-  emit({ event: 'scan:start' });
-
+  if (busy) throw new Error('A run is already active');
+  busy = true;
   try {
+    const tab = await getTargetTab();
+    const jev = await getJev();
+    const io = makeIo(tab);
+    emit({ type: 'scan:start' });
+    const startSpend = jev.spent();
     // Step 2: triage the visible ticket (marks on [data-ticket-actions] or whole page)
     const actionMarks = (await io.addMarks('[data-ticket-actions]')) || [];
     const markScope = actionMarks.length > 0 ? actionMarks : ((await io.addMarks()) || []);
     const markCount = markScope.length;
+    if (!markCount) throw new Error('No visible buttons to mark on this page');
 
     const screenshot = await io.screenshot();
     const { state, assets } = screenshotState(screenshot);
@@ -173,24 +177,23 @@ async function runScan() {
       await io.box([left, top, right - left, bottom - top], 'damage');
     }
 
-    const title = await readTitle(tab.id);
+    const title = await readTitle(tab.id) || 'Ticket 1';
 
     const decisionEvent = {
-      type: 'event',
-      event: 'decision',
+      type: 'decision',
       scanResult: true,
       decision,
       title,
       latencyMs: result.latencyMs,
-      costUsd: jev.spent() - settings.spentUsd,
+      costUsd: jev.spent() - startSpend,
     };
 
     emit(decisionEvent);
     return decisionEvent;
   } catch (error) {
-    emit({ event: 'error', message: error.message });
+    emit({ type: 'error', message: error.message });
     throw error;
-  }
+  } finally { busy = false; if (settingsChanged) { jevPromise = null; settingsChanged = false; } }
 }
 
 // ---------- Autopilot ----------
@@ -198,68 +201,46 @@ async function runScan() {
 let autopilotAbort = null;
 
 async function startAutopilot() {
-  if (autopilotAbort) return;
+  if (busy) return { error: 'A run is already active' };
+  busy = true;
   autopilotAbort = new AbortController();
   const signal = autopilotAbort.signal;
-
-  const tab = await getTargetTab();
-  if (!tab?.id) { emit({ event: 'error', message: 'No active tab' }); autopilotAbort = null; return; }
-
-  const settings = await getSettings();
-  const isLocal = settings.baseUrl?.includes('localhost') || settings.baseUrl?.includes('127.0.0.1');
-  if (!settings.apiKey && !isLocal) {
-    emit({ event: 'error', message: 'Set your API key first' });
-    autopilotAbort = null;
-    return;
-  }
-  const apiKey = settings.apiKey || 'test-key';
-
-  const jev = createJev({
-    apiKey,
-    baseUrl: settings.baseUrl,
-    budgetUsd: settings.budgetUsd,
-    spentUsd: settings.spentUsd,
-    onSpend: async (total) => {
-      await updateSettings({ spentUsd: total });
-      emit({ event: 'spend', spentUsd: total });
-    },
-  });
-
-  const io = makeIo(tab);
-  emit({ event: 'autopilot:started' });
-
   try {
-    await runAgent({
+    const tab = await getTargetTab();
+    const jev = await getJev();
+    const io = makeIo(tab);
+    emit({ type: 'autopilot:started' });
+    let ticketNumber = 0;
+    let pendingEvents = Promise.resolve();
+    const result = await runAgent({
       jev,
       io,
-      onEvent: async (event) => {
-        if (signal.aborted) return;
-        let title = '';
-        if (event.type === 'ticket') {
-          title = await readTitle(tab.id);
-          event.title = title;
-        }
-        emit({
-          event: event.type === 'ticket' ? 'decision' : 'autopilot:event',
-          subtype: event.type,
-          ...event,
+      signal,
+      onEvent: event => {
+        pendingEvents = pendingEvents.then(async () => {
+          if (event.type === 'ticket') {
+            const fallback = `Ticket ${++ticketNumber}`;
+            const title = await readTitle(tab.id);
+            emit({ ...event, title: title || fallback });
+          } else emit(event);
         });
       },
     });
+    await pendingEvents;
+    return result;
   } catch (error) {
-    if (!signal.aborted) emit({ event: 'error', message: error.message });
+    emit({ type: 'error', message: error.message });
+    return { error: error.message };
+  } finally {
+    autopilotAbort = null;
+    busy = false;
+    if (settingsChanged) { jevPromise = null; settingsChanged = false; }
+    emit({ type: 'autopilot:stopped' });
   }
-
-  autopilotAbort = null;
-  emit({ event: 'autopilot:stopped' });
 }
 
 function stopAutopilot() {
-  if (autopilotAbort) {
-    autopilotAbort.abort();
-    autopilotAbort = null;
-  }
-  emit({ event: 'autopilot:stopped' });
+  autopilotAbort?.abort();
 }
 
 // ---------- Message handler ----------
@@ -272,8 +253,8 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     return true; // async
   }
   if (msg.action === 'autopilot:start') {
-    startAutopilot();
-    sendResponse({ ok: true });
+    if (busy) sendResponse({ error: 'A run is already active' });
+    else { startAutopilot(); sendResponse({ ok: true }); }
     return false;
   }
   if (msg.action === 'autopilot:stop') {
@@ -286,7 +267,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     return true;
   }
   if (msg.action === 'saveSettings') {
-    updateSettings(msg.settings).then(() => sendResponse({ ok: true }));
+    updateSettings(msg.settings).then(() => { if (busy) settingsChanged = true; else jevPromise = null; sendResponse({ ok: true }); });
     return true;
   }
 });

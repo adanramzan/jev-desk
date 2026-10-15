@@ -1,6 +1,6 @@
 import { BudgetError, CATEGORIES, JevError, decide, markQuestion, screenshotState, triageQuestions } from './jev.mjs';
 
-export async function runAgent({ jev, io, thresholds, maxTickets = Infinity, onEvent = () => {} }) {
+export async function runAgent({ jev, io, thresholds, maxTickets = Infinity, onEvent = () => {}, signal }) {
   let handled = 0;
   const skipped = new Set();
   const markId = (choice, marks) => {
@@ -8,8 +8,10 @@ export async function runAgent({ jev, io, thresholds, maxTickets = Infinity, onE
     return index ? marks[Number(index) - 1]?.id : undefined;
   };
   const stop = (stoppedBy) => ({ handled, stoppedBy });
+  const stopped = () => { if (signal?.aborted) { onEvent({ type: 'stopped' }); return true; } return false; };
 
   while (handled < maxTickets) {
+    if (stopped()) return stop('stopped');
     let listAnswers, listLatency, startSpend = jev.spent();
     let currentMark;
     try {
@@ -30,6 +32,7 @@ export async function runAgent({ jev, io, thresholds, maxTickets = Infinity, onE
         if (!id) throw new Error('Unknown ticket mark');
         currentMark = listAnswers.next.choice;
         if (skipped.has(currentMark)) throw new Error('Jev selected a previously skipped ticket');
+        if (stopped()) return stop('stopped');
         await io.click(id);
       } finally { await io.removeMarks(); }
 
@@ -53,11 +56,12 @@ export async function runAgent({ jev, io, thresholds, maxTickets = Infinity, onE
           onEvent({ type: 'error', message: 'Unknown category mark; escalating' });
         }
         if (decision.mode === 'auto') {
+          if (stopped()) return stop('stopped');
           await io.click(categoryId);
           clicked.push(CATEGORIES.find(([key]) => key === decision.category)[1]);
           if (decision.urgent) {
             const urgentId = markId(result.answers.btn_urgent, actionMarks);
-            if (urgentId) { await io.click(urgentId); clicked.push('Urgent'); }
+            if (urgentId) { if (stopped()) return stop('stopped'); await io.click(urgentId); clicked.push('Urgent'); }
             else onEvent({ type: 'error', message: 'Unknown urgent mark' });
           }
         } else {
@@ -67,6 +71,7 @@ export async function runAgent({ jev, io, thresholds, maxTickets = Infinity, onE
             skipped.add(currentMark);
             continue;
           }
+          if (stopped()) return stop('stopped');
           await io.click(escalateId);
           clicked.push('Escalate to human');
         }

@@ -132,13 +132,14 @@ test('extension service worker scan sets marks and returns decision event on hel
   await page.waitForSelector('[data-ticket-list] [data-ticket-id]');
   await page.click('[data-ticket-list] [data-ticket-id]');
   await page.waitForSelector('[data-ticket-actions]');
+  const beforeScan = await page.evaluate(() => helpline.state());
 
   // Trigger scan by evaluating in the service worker
   const decisionEvent = await sw.evaluate(() => runScan());
 
   // Assert decision event structure and values
   assert.ok(decisionEvent, 'Scan must return a decision event');
-  assert.equal(decisionEvent.event, 'decision');
+  assert.equal(decisionEvent.type, 'decision');
   assert.equal(decisionEvent.decision.category, 'damaged');
   assert.equal(decisionEvent.decision.confidence, 0.96);
   assert.equal(decisionEvent.decision.urgent, true);
@@ -157,6 +158,8 @@ test('extension service worker scan sets marks and returns decision event on hel
   // Assert stub received the call
   assert.equal(stubJev.calls.length, 1);
   assert.ok(stubJev.calls[0].questions.category);
+  assert.deepEqual(await page.evaluate(() => helpline.state()), beforeScan, 'Scan must not change ticket state');
+  assert.equal((await sw.evaluate(() => chrome.storage.local.get('spentUsd'))).spentUsd, 3000 * 42e-9);
 });
 
 test('extension side panel renders all 10 lanes, confidence bars, and reflects scan results', async (t) => {
@@ -227,7 +230,8 @@ test('extension side panel renders all 10 lanes, confidence bars, and reflects s
   }
 
   // Click Scan this ticket on the side panel
-  await sidepanelPage.click('#btn-scan');
+  await helpdeskPage.bringToFront();
+  await sidepanelPage.locator('#btn-scan').evaluate(button => button.click());
 
   // Wait for card to appear in the shipping lane
   await sidepanelPage.waitForSelector('#lane-shipping .card');
@@ -251,4 +255,75 @@ test('extension side panel renders all 10 lanes, confidence bars, and reflects s
   // Verify marks were placed on helpdesk page
   const markCount = await helpdeskPage.locator('.jev-mark').count();
   assert.ok(markCount > 0, 'Marks must exist on the helpdesk page');
+  assert.equal(await sidepanelPage.locator('#stat-spend').textContent(), '$0.0001', 'Spend is absolute, not added twice');
+  await sw.evaluate(() => chrome.runtime.sendMessage({ type: 'event', event: {
+    type: 'ticket', title: 'Needs review', decision: { category: 'shipping', confidence: 0.7, mode: 'suggest', urgent: true }, latencyMs: 10,
+  } }).catch(() => {}));
+  await sidepanelPage.waitForSelector('#lane-human .card');
+  assert.equal(await sidepanelPage.locator('#lane-shipping .card').count(), 1, 'Suggested ticket must not enter a category lane');
+  assert.equal(await sidepanelPage.locator('#lane-urgent .card').count(), 0, 'Suggested ticket must not enter the urgent lane');
+});
+
+test('autopilot streams three ticket events to the panel and triages three tickets', async t => {
+  const helpdesk = await startServer(0); t.after(() => helpdesk.close());
+  let listCalls = 0;
+  const stub = await startInlineStubJev(async body => body.questions.next
+    ? { next: choice('m3'), any_new: { type: 'noul', noul: ++listCalls <= 3 ? 1 : 0 } }
+    : { category: choice('refund'), photo: choice('none'), urgency: { type: 'score', score: 1 }, refund: { type: 'noul', noul: 1 }, btn_refund: choice('m1') });
+  t.after(() => stub.close());
+  const context = await launchExtensionContext(); t.after(() => context.close());
+  const sw = await getServiceWorker(context);
+  await sw.evaluate(baseUrl => chrome.storage.local.set({ apiKey: 'test-key', baseUrl, budgetUsd: 1 }), stub.url);
+  const page = context.pages()[0] || await context.newPage();
+  await page.goto(`${helpdesk.url}?reset`);
+  await page.waitForSelector('[data-ticket-id]');
+  const panel = await context.newPage();
+  await panel.goto(`chrome-extension://${new URL(sw.url()).host}/sidepanel.html`);
+  await page.bringToFront();
+  const result = await sw.evaluate(() => startAutopilot());
+  assert.deepEqual(result, { handled: 3, stoppedBy: 'done' }, JSON.stringify(await sw.evaluate(() => events.slice(-5))));
+  await panel.waitForFunction(() => document.querySelectorAll('#lane-refund .card').length === 3);
+  assert.equal((await page.evaluate(() => helpline.state())).filter(ticket => ticket.status === 'Triaged').length, 3);
+  const ticketEvents = await sw.evaluate(() => events.filter(message => message.event.type === 'ticket'));
+  assert.equal(ticketEvents.length, 3);
+  assert.ok(ticketEvents.every(message => message.type === 'event' && message.event.decision.category === 'refund'));
+});
+
+test('stop after first ticket leaves later tickets untouched', async t => {
+  const helpdesk = await startServer(0); t.after(() => helpdesk.close());
+  let listCalls = 0;
+  const stub = await startInlineStubJev(async body => {
+    if (body.questions.next) {
+      if (++listCalls > 1) await new Promise(resolve => setTimeout(resolve, 200));
+      return { next: choice('m3'), any_new: { type: 'noul', noul: 1 } };
+    }
+    return { category: choice('refund'), photo: choice('none'), btn_refund: choice('m1') };
+  });
+  t.after(() => stub.close());
+  const context = await launchExtensionContext(); t.after(() => context.close());
+  const sw = await getServiceWorker(context);
+  await sw.evaluate(baseUrl => chrome.storage.local.set({ apiKey: 'test-key', baseUrl, budgetUsd: 1 }), stub.url);
+  const page = context.pages()[0] || await context.newPage();
+  await page.goto(`${helpdesk.url}?reset`);
+  await page.waitForSelector('[data-ticket-id]');
+  const running = sw.evaluate(() => startAutopilot());
+  await page.waitForFunction(() => helpline.state().filter(ticket => ticket.status === 'Triaged').length === 1);
+  await sw.evaluate(() => stopAutopilot());
+  assert.deepEqual(await running, { handled: 1, stoppedBy: 'stopped' });
+  assert.equal((await page.evaluate(() => helpline.state())).filter(ticket => ticket.status === 'Triaged').length, 1);
+  assert.ok((await sw.evaluate(() => events)).some(message => message.event.type === 'stopped'));
+});
+
+test('scan falls back to visible buttons on a plain web page', async t => {
+  const stub = await startInlineStubJev({ category: choice('billing'), photo: choice('none') });
+  t.after(() => stub.close());
+  const context = await launchExtensionContext(); t.after(() => context.close());
+  const sw = await getServiceWorker(context);
+  await sw.evaluate(baseUrl => chrome.storage.local.set({ apiKey: 'test-key', baseUrl, budgetUsd: 1 }), stub.url);
+  const page = context.pages()[0] || await context.newPage();
+  await page.goto('http://example.com').catch(() => {});
+  await page.setContent('<h1>Plain page</h1><button>One</button><button>Two</button>');
+  const result = await sw.evaluate(() => runScan());
+  assert.equal(result.decision.category, 'billing');
+  assert.equal(await page.locator('.jev-mark').count(), 2);
 });

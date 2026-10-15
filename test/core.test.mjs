@@ -161,6 +161,22 @@ test('agent triages two tickets, escalates low confidence, and stops when none r
   assert.deepEqual(io.waits, [150, 150]);
 });
 
+test('agent stops after the first ticket without opening another', async () => {
+  const io = fakeIo(), events = [], controller = new AbortController();
+  let calls = 0;
+  const jev = { spent: () => 0, ask: async () => ({ answers: ++calls % 2
+    ? { next: answer('m1'), any_new: noul(1) }
+    : { category: answer('refund'), btn_refund: answer('m2') }, latencyMs: 1 }) };
+  const result = await runAgent({ jev, io, signal: controller.signal, onEvent: event => {
+    events.push(event);
+    if (event.type === 'ticket') controller.abort();
+  } });
+  assert.deepEqual(result, { handled: 1, stoppedBy: 'stopped' });
+  assert.deepEqual(io.clicks, ['id1', 'id2']);
+  assert.deepEqual(events.map(event => event.type), ['ticket', 'stopped']);
+  assert.equal(calls, 2);
+});
+
 test('agent escalates an unknown category mark', async () => {
   const io = fakeIo(), events = [];
   const scripted = [

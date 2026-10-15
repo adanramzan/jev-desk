@@ -39,18 +39,22 @@ function loadSettings() {
     if (!settings) return;
     document.getElementById('input-apikey').value = settings.apiKey || '';
     document.getElementById('input-budget').value = settings.budgetUsd ?? 1;
+    document.getElementById('stat-budget').textContent = ` / $${(settings.budgetUsd ?? 1).toFixed(2)}`;
     document.getElementById('input-baseurl').value = settings.baseUrl || 'https://api.typesafe.ai';
     updateSpend(settings.spentUsd || 0);
   });
 }
 
 function saveSettings() {
+  const budgetUsd = Number(document.getElementById('input-budget').value);
+  if (!Number.isFinite(budgetUsd) || budgetUsd <= 0) { setStatus('Enter a budget greater than zero'); return; }
   const settings = {
     apiKey: document.getElementById('input-apikey').value.trim(),
-    budgetUsd: Number(document.getElementById('input-budget').value) || 1,
+    budgetUsd,
     baseUrl: document.getElementById('input-baseurl').value.trim() || 'https://api.typesafe.ai',
   };
   chrome.runtime.sendMessage({ action: 'saveSettings', settings }, () => {
+    document.getElementById('stat-budget').textContent = ` / $${budgetUsd.toFixed(2)}`;
     setStatus('Settings saved');
   });
 }
@@ -103,7 +107,7 @@ function renderCard(card) {
 
   el.innerHTML = `
     <div class="card-top">
-      <span class="card-subject" title="${esc(card.subject)}">${esc(card.subject)}</span>
+      <span class="card-subject" title="${esc(card.subject).replaceAll('"', '&quot;')}">${esc(card.subject)}</span>
       <span class="card-confidence">${pct}%</span>
     </div>
     <div class="card-bar"><div class="card-bar-fill ${barClass}" style="width:${pct}%"></div></div>
@@ -117,7 +121,7 @@ function renderCard(card) {
 
 function addDecision(decision, title, latencyMs) {
   const card = {
-    subject: title || 'Untitled ticket',
+    subject: title || `Ticket ${ticketCount + 1}`,
     confidence: decision.confidence,
     refund: decision.refund,
     photo: decision.photo,
@@ -127,12 +131,12 @@ function addDecision(decision, title, latencyMs) {
   };
 
   // Urgent lane (cards also go to their category lane)
-  if (decision.urgent) {
+  if (decision.mode === 'auto' && decision.urgent) {
     cards.urgent.push(card);
   }
 
   // Category or human lane
-  if (decision.mode === 'human') {
+  if (decision.mode !== 'auto') {
     cards.human.push(card);
   } else if (decision.category && cards[decision.category]) {
     cards[decision.category].push(card);
@@ -168,8 +172,9 @@ function bindEvents() {
   document.getElementById('btn-scan').addEventListener('click', () => {
     document.getElementById('btn-scan').disabled = true;
     setStatus('Scanning…');
-    chrome.runtime.sendMessage({ action: 'scan' }, () => {
-      // Response comes via events
+    chrome.runtime.sendMessage({ action: 'scan' }, response => {
+      document.getElementById('btn-scan').disabled = false;
+      if (chrome.runtime.lastError || response?.error) setStatus(`Error: ${response?.error || chrome.runtime.lastError.message}`);
     });
   });
 
@@ -183,7 +188,13 @@ function bindEvents() {
       setStatus('Autopilot stopped');
     } else {
       startTime = Date.now();
-      chrome.runtime.sendMessage({ action: 'autopilot:start' });
+      chrome.runtime.sendMessage({ action: 'autopilot:start' }, response => {
+        if (chrome.runtime.lastError || response?.error) {
+          autopilotBtn.dataset.state = 'off';
+          autopilotBtn.textContent = 'Autopilot';
+          setStatus(`Error: ${response?.error || chrome.runtime.lastError.message}`);
+        }
+      });
       autopilotBtn.dataset.state = 'on';
       autopilotBtn.textContent = 'Stop Autopilot';
       setStatus('Autopilot running…');
@@ -197,7 +208,8 @@ function listenForEvents() {
   chrome.runtime.onMessage.addListener((msg) => {
     if (msg.type !== 'event') return;
 
-    switch (msg.event) {
+    const event = msg.event;
+    switch (event.type) {
       case 'scan:start':
         setStatus('Scanning…');
         break;
@@ -205,23 +217,28 @@ function listenForEvents() {
       case 'decision':
       case 'scan:result':
         if (!startTime) startTime = Date.now();
-        if (msg.decision) {
-          addDecision(msg.decision, msg.title, msg.latencyMs);
-          setStatus(`Scanned: ${msg.title || 'ticket'} → ${msg.decision.category} (${Math.round((msg.decision.confidence || 0) * 100)}%)`);
+        if (event.decision) {
+          addDecision(event.decision, event.title, event.latencyMs);
+          setStatus(`Scanned: ${event.title || 'ticket'} → ${event.decision.category} (${Math.round((event.decision.confidence || 0) * 100)}%)`);
         }
         document.getElementById('btn-scan').disabled = false;
-        if (msg.costUsd != null) updateSpend((parseFloat(document.getElementById('stat-spend').textContent.slice(1)) || 0) + msg.costUsd);
         break;
 
-      case 'autopilot:event':
-        if (msg.decision) {
-          addDecision(msg.decision, msg.title, msg.latencyMs);
-          setStatus(`Triaged: ${msg.title || 'ticket'} → ${msg.decision.category}`);
-        } else if (msg.subtype === 'budget' || msg.type === 'budget') {
-          setStatus('Budget exhausted');
-        } else if (msg.subtype === 'done' || msg.type === 'done') {
-          setStatus('All tickets processed');
-        }
+      case 'ticket':
+        addDecision(event.decision, event.title, event.latencyMs);
+        setStatus(`Triaged: ${event.title || 'ticket'} → ${event.decision.category}`);
+        break;
+
+      case 'budget':
+        setStatus('Budget exhausted');
+        break;
+
+      case 'done':
+        setStatus('All tickets processed');
+        break;
+
+      case 'stopped':
+        setStatus('Autopilot stopped');
         break;
 
       case 'autopilot:started':
@@ -232,17 +249,16 @@ function listenForEvents() {
         const btn = document.getElementById('btn-autopilot');
         btn.dataset.state = 'off';
         btn.textContent = 'Autopilot';
-        setStatus('Autopilot stopped');
         break;
       }
 
       case 'spend':
-        updateSpend(msg.spentUsd);
+        updateSpend(event.spentUsd);
         break;
 
       case 'error':
         document.getElementById('btn-scan').disabled = false;
-        setStatus(`Error: ${msg.message}`);
+        setStatus(`Error: ${event.message}`);
         break;
     }
   });

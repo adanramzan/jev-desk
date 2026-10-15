@@ -1,0 +1,678 @@
+[
+ {
+  "id": 1001,
+  "subject": "Error when signing in",
+  "from": "Hannah Berg",
+  "received": "2 min ago",
+  "body": "Every time I try to sign in I get this error (screenshot attached). I can't access my orders.",
+  "images": [
+   "img/error-signin.png"
+  ],
+  "truth": {
+   "category": "account",
+   "photo": "error_screenshot",
+   "source": "handwritten"
+  }
+ },
+ {
+  "id": 1002,
+  "subject": "Where is my refund?",
+  "from": "Sofia Rossi",
+  "received": "9 min ago",
+  "body": "I'm waiting for a reimbjrsement of $64.90",
+  "images": [],
+  "truth": {
+   "category": "refund",
+   "photo": "none",
+   "source": "bitext:25968:track_refund"
+  }
+ },
+ {
+  "id": 1003,
+  "subject": "Partnership opportunity crypto",
+  "from": "Ana Souza",
+  "received": "16 min ago",
+  "body": "Invest in our new crypto token and earn 300% in a month. Your customers will love it. Limited spots.",
+  "images": [],
+  "truth": {
+   "category": "spam",
+   "photo": "none",
+   "source": "handwritten"
+  }
+ },
+ {
+  "id": 1004,
+  "subject": "Please cancel",
+  "from": "Ana Souza",
+  "received": "23 min ago",
+  "body": "I have problems with cancelling purchase #48213",
+  "images": [],
+  "truth": {
+   "category": "order",
+   "photo": "none",
+   "source": "bitext:111:cancel_order"
+  }
+ },
+ {
+  "id": 1005,
+  "subject": "Got a mug instead of a teapot",
+  "from": "Chloe Dubois",
+  "received": "30 min ago",
+  "body": "My order was a glass teapot. This mug arrived instead. Attached a photo of what was in the box.",
+  "images": [
+   "img/item-mug.jpg"
+  ],
+  "truth": {
+   "category": "wrong_item",
+   "photo": "product",
+   "source": "handwritten"
+  }
+ },
+ {
+  "id": 1006,
+  "subject": "Where is my refund?",
+  "from": "Arjun Mehta",
+  "received": "37 min ago",
+  "body": "Want help to know if there are any updates on my restitution",
+  "images": [],
+  "truth": {
+   "category": "refund",
+   "photo": "none",
+   "source": "bitext:26417:track_refund"
+  }
+ },
+ {
+  "id": 1007,
+  "subject": "Need an invoice copy",
+  "from": "Ravi Patel",
+  "received": "44 min ago",
+  "body": "I need assistance to download my invoice #12588",
+  "images": [],
+  "truth": {
+   "category": "billing",
+   "photo": "none",
+   "source": "bitext:15460:get_invoice"
+  }
+ },
+ {
+  "id": 1008,
+  "subject": "Update my account details",
+  "from": "Diego Alvarez",
+  "received": "51 min ago",
+  "body": "Correcting infornation on Premium account",
+  "images": [],
+  "truth": {
+   "category": "account",
+   "photo": "none",
+   "source": "bitext:14557:edit_account"
+  }
+ },
+ {
+  "id": 1009,
+  "subject": "Order damaged in transit",
+  "from": "Noah Fischer",
+  "received": "58 min ago",
+  "body": "Hello, the mug I ordered as a gift came in pieces, see attached. Order #50988.",
+  "images": [
+   "img/damaged-mug.jpg"
+  ],
+  "truth": {
+   "category": "damaged",
+   "photo": "damaged",
+   "source": "handwritten"
+  }
+ },
+ {
+  "id": 1010,
+  "subject": "Can't log in",
+  "from": "Ana Souza",
+  "received": "65 min ago",
+  "body": "What do i have to do to retrieve my account pin",
+  "images": [],
+  "truth": {
+   "category": "account",
+   "photo": "none",
+   "source": "bitext:20492:recover_password"
+  }
+ },
+ {
+  "id": 1011,
+  "subject": "Where is my refund?",
+  "from": "Lucas Martin",
+  "received": "72 min ago",
+  "body": "I need to check my goddamn restitution status",
+  "images": [],
+  "truth": {
+   "category": "refund",
+   "photo": "none",
+   "source": "bitext:26492:track_refund"
+  }
+ },
+ {
+  "id": 1012,
+  "subject": "Please cancel",
+  "from": "Chloe Dubois",
+  "received": "79 min ago",
+  "body": "Want help canceling purchase #48213",
+  "images": [],
+  "truth": {
+   "category": "order",
+   "photo": "none",
+   "source": "bitext:923:cancel_order"
+  }
+ },
+ {
+  "id": 1013,
+  "subject": "Delete my account",
+  "from": "Lucas Martin",
+  "received": "86 min ago",
+  "body": "How can I find information about Premium account deletions?",
+  "images": [],
+  "truth": {
+   "category": "account",
+   "photo": "none",
+   "source": "bitext:11551:delete_account"
+  }
+ },
+ {
+  "id": 1014,
+  "subject": "Question about refunds",
+  "from": "Liam O'Connor",
+  "received": "93 min ago",
+  "body": "Need to see in which situations can i ask for refunds",
+  "images": [],
+  "truth": {
+   "category": "refund",
+   "photo": "none",
+   "source": "bitext:6665:check_refund_policy"
+  }
+ },
+ {
+  "id": 1015,
+  "subject": "Question about refunds",
+  "from": "Ana Souza",
+  "received": "100 min ago",
+  "body": "I want to see in which cases can I request my money back",
+  "images": [],
+  "truth": {
+   "category": "refund",
+   "photo": "none",
+   "source": "bitext:6346:check_refund_policy"
+  }
+ },
+ {
+  "id": 1016,
+  "subject": "Wrong product sent",
+  "from": "Ana Souza",
+  "received": "107 min ago",
+  "body": "I bought a hiking backpack in grey. The package contained this orange camera bag. Please send the right one.",
+  "images": [
+   "img/item-backpack.jpg"
+  ],
+  "truth": {
+   "category": "wrong_item",
+   "photo": "product",
+   "source": "handwritten"
+  }
+ },
+ {
+  "id": 1017,
+  "subject": "Phone screen cracked out of the box",
+  "from": "Emma Wilson",
+  "received": "114 min ago",
+  "body": "Just unboxed my new phone and the screen is already cracked!! I haven't even turned it on. Photo attached, I need this sorted today.",
+  "images": [
+   "img/damaged-phone.jpg"
+  ],
+  "truth": {
+   "category": "damaged",
+   "photo": "damaged",
+   "source": "handwritten"
+  }
+ },
+ {
+  "id": 1018,
+  "subject": "Charged twice",
+  "from": "Ana Souza",
+  "received": "121 min ago",
+  "body": "Hi, I was charged twice for the same order. Here is my receipt showing the payment. Please fix the double charge.",
+  "images": [
+   "img/receipt.jpg"
+  ],
+  "truth": {
+   "category": "billing",
+   "photo": "receipt",
+   "source": "handwritten"
+  }
+ },
+ {
+  "id": 1019,
+  "subject": "Laptop display broken",
+  "from": "Lucas Martin",
+  "received": "128 min ago",
+  "body": "My laptop arrived and the display shows these broken lines from the first boot. Attaching a picture of the screen.",
+  "images": [
+   "img/damaged-laptop.jpg"
+  ],
+  "truth": {
+   "category": "damaged",
+   "photo": "damaged",
+   "source": "handwritten"
+  }
+ },
+ {
+  "id": 1020,
+  "subject": "Please cancel",
+  "from": "Daniel Kim",
+  "received": "135 min ago",
+  "body": "I want help cancelling purchase #48213",
+  "images": [],
+  "truth": {
+   "category": "order",
+   "photo": "none",
+   "source": "bitext:826:cancel_order"
+  }
+ },
+ {
+  "id": 1021,
+  "subject": "Need an invoice copy",
+  "from": "Lucas Martin",
+  "received": "142 min ago",
+  "body": "Assistance to get my bills from Sam",
+  "images": [],
+  "truth": {
+   "category": "billing",
+   "photo": "none",
+   "source": "bitext:15108:get_invoice"
+  }
+ },
+ {
+  "id": 1022,
+  "subject": "Payment problem",
+  "from": "Yuki Tanaka",
+  "received": "149 min ago",
+  "body": "I cannot pay, help to inform of problems with payment",
+  "images": [],
+  "truth": {
+   "category": "billing",
+   "photo": "none",
+   "source": "bitext:18630:payment_issue"
+  }
+ },
+ {
+  "id": 1023,
+  "subject": "Boost your SEO rankings fast",
+  "from": "Sofia Rossi",
+  "received": "156 min ago",
+  "body": "Hi, we can get your store to #1 on Google in 7 days. Cheap backlinks, guaranteed results. Reply for our price list.",
+  "images": [],
+  "truth": {
+   "category": "spam",
+   "photo": "none",
+   "source": "handwritten"
+  }
+ },
+ {
+  "id": 1024,
+  "subject": "Where is my package?",
+  "from": "Priya Nair",
+  "received": "163 min ago",
+  "body": "I need help checking the ET of the purchase #48213",
+  "images": [],
+  "truth": {
+   "category": "shipping",
+   "photo": "none",
+   "source": "bitext:25203:track_order"
+  }
+ },
+ {
+  "id": 1025,
+  "subject": "Wrong delivery address",
+  "from": "Julia Novak",
+  "received": "170 min ago",
+  "body": "I have issues trying to edit my delivery address",
+  "images": [],
+  "truth": {
+   "category": "shipping",
+   "photo": "none",
+   "source": "bitext:2723:change_shipping_address"
+  }
+ },
+ {
+  "id": 1026,
+  "subject": "This is not what I ordered",
+  "from": "Mei Chen",
+  "received": "177 min ago",
+  "body": "I ordered the brown leather boots in size 42 but received these sneakers instead (photo attached). Order #49120.",
+  "images": [
+   "img/item-sneakers.jpg"
+  ],
+  "truth": {
+   "category": "wrong_item",
+   "photo": "product",
+   "source": "handwritten"
+  }
+ },
+ {
+  "id": 1027,
+  "subject": "Modify order",
+  "from": "Ana Souza",
+  "received": "184 min ago",
+  "body": "Help switching an article of order #48213",
+  "images": [],
+  "truth": {
+   "category": "order",
+   "photo": "none",
+   "source": "bitext:1441:change_order"
+  }
+ },
+ {
+  "id": 1028,
+  "subject": "Mug arrived smashed",
+  "from": "Yuki Tanaka",
+  "received": "191 min ago",
+  "body": "Hi, my order #51234 (the ceramic mug) arrived today completely broken. Photo attached. Can you send a replacement?",
+  "images": [
+   "img/damaged-mug.jpg"
+  ],
+  "truth": {
+   "category": "damaged",
+   "photo": "damaged",
+   "source": "handwritten"
+  }
+ },
+ {
+  "id": 1029,
+  "subject": "Invoice",
+  "from": "Kwame Mensah",
+  "received": "198 min ago",
+  "body": "I don't know what to do to check invoice #00108",
+  "images": [],
+  "truth": {
+   "category": "billing",
+   "photo": "none",
+   "source": "bitext:4255:check_invoice"
+  }
+ },
+ {
+  "id": 1030,
+  "subject": "Sign-up not working",
+  "from": "Lucas Martin",
+  "received": "205 min ago",
+  "body": "I don't know how to notify of an error with a sign-up",
+  "images": [],
+  "truth": {
+   "category": "account",
+   "photo": "none",
+   "source": "bitext:21342:registration_problems"
+  }
+ },
+ {
+  "id": 1031,
+  "subject": "Modify order",
+  "from": "Noah Fischer",
+  "received": "212 min ago",
+  "body": "Wanna remoev a bloody article from order #48213",
+  "images": [],
+  "truth": {
+   "category": "order",
+   "photo": "none",
+   "source": "bitext:1277:change_order"
+  }
+ },
+ {
+  "id": 1032,
+  "subject": "Payment methods?",
+  "from": "Omar Haddad",
+  "received": "219 min ago",
+  "body": "I do not know how I can list the available payment optrions",
+  "images": [],
+  "truth": {
+   "category": "billing",
+   "photo": "none",
+   "source": "bitext:5443:check_payment_methods"
+  }
+ },
+ {
+  "id": 1033,
+  "subject": "Delivery time",
+  "from": "Arjun Mehta",
+  "received": "226 min ago",
+  "body": "I want help checking when my item is gonna arrive",
+  "images": [],
+  "truth": {
+   "category": "shipping",
+   "photo": "none",
+   "source": "bitext:13767:delivery_period"
+  }
+ },
+ {
+  "id": 1034,
+  "subject": "Need an invoice copy",
+  "from": "Priya Nair",
+  "received": "3 min ago",
+  "body": "I do not know what I need to do to download the bill #85632",
+  "images": [],
+  "truth": {
+   "category": "billing",
+   "photo": "none",
+   "source": "bitext:15693:get_invoice"
+  }
+ },
+ {
+  "id": 1035,
+  "subject": "Delivery time",
+  "from": "Mei Chen",
+  "received": "10 min ago",
+  "body": "I want to check how long the shipment taes, how can I do it?",
+  "images": [],
+  "truth": {
+   "category": "shipping",
+   "photo": "none",
+   "source": "bitext:13022:delivery_period"
+  }
+ },
+ {
+  "id": 1036,
+  "subject": "Sign-up not working",
+  "from": "Julia Novak",
+  "received": "17 min ago",
+  "body": "I do not know what to do to inform of an issue with a signup",
+  "images": [],
+  "truth": {
+   "category": "account",
+   "photo": "none",
+   "source": "bitext:21006:registration_problems"
+  }
+ },
+ {
+  "id": 1037,
+  "subject": "Payment problem",
+  "from": "Lucas Martin",
+  "received": "24 min ago",
+  "body": "I dont know how i can notify of issues with online payments",
+  "images": [],
+  "truth": {
+   "category": "billing",
+   "photo": "none",
+   "source": "bitext:18748:payment_issue"
+  }
+ },
+ {
+  "id": 1038,
+  "subject": "Tracking my order",
+  "from": "Daniel Kim",
+  "received": "31 min ago",
+  "body": "When will I receive ordered #48213?",
+  "images": [],
+  "truth": {
+   "category": "shipping",
+   "photo": "none",
+   "source": "bitext:25278:track_order"
+  }
+ },
+ {
+  "id": 1039,
+  "subject": "Delete my account",
+  "from": "Ravi Patel",
+  "received": "38 min ago",
+  "body": "I dont know what to do to close a platinum account",
+  "images": [],
+  "truth": {
+   "category": "account",
+   "photo": "none",
+   "source": "bitext:10994:delete_account"
+  }
+ },
+ {
+  "id": 1040,
+  "subject": "Received someone else's order?",
+  "from": "Sofia Rossi",
+  "received": "45 min ago",
+  "body": "I ordered over-ear noise cancelling headphones, but got these small earbuds. See picture.",
+  "images": [
+   "img/item-headphones.jpg"
+  ],
+  "truth": {
+   "category": "wrong_item",
+   "photo": "product",
+   "source": "handwritten"
+  }
+ },
+ {
+  "id": 1041,
+  "subject": "I want my money back",
+  "from": "Ravi Patel",
+  "received": "52 min ago",
+  "body": "What do i have to do to request restitutions of money",
+  "images": [],
+  "truth": {
+   "category": "refund",
+   "photo": "none",
+   "source": "bitext:16019:get_refund"
+  }
+ },
+ {
+  "id": 1042,
+  "subject": "Incorrect item in my parcel",
+  "from": "Fatima Zahra",
+  "received": "59 min ago",
+  "body": "I ordered a plain white t-shirt, size M. The parcel had a striped top and a notebook instead (photo).",
+  "images": [
+   "img/item-tshirt.jpg"
+  ],
+  "truth": {
+   "category": "wrong_item",
+   "photo": "product",
+   "source": "handwritten"
+  }
+ },
+ {
+  "id": 1043,
+  "subject": "CONGRATULATIONS you won a $1000 gift card",
+  "from": "Arjun Mehta",
+  "received": "66 min ago",
+  "body": "Dear winner, claim your $1000 gift card now by clicking this link and entering your bank details. Offer ends today!!!",
+  "images": [],
+  "truth": {
+   "category": "spam",
+   "photo": "none",
+   "source": "handwritten"
+  }
+ },
+ {
+  "id": 1044,
+  "subject": "Can't log in",
+  "from": "Mei Chen",
+  "received": "73 min ago",
+  "body": "Need assistance to restore my user account PIN code",
+  "images": [],
+  "truth": {
+   "category": "account",
+   "photo": "none",
+   "source": "bitext:20336:recover_password"
+  }
+ },
+ {
+  "id": 1045,
+  "subject": "Box crushed on delivery",
+  "from": "Arjun Mehta",
+  "received": "80 min ago",
+  "body": "The parcel was left on my doorstep like this and the item inside is dented. Really disappointed. See photo.",
+  "images": [
+   "img/damaged-box2.jpg"
+  ],
+  "truth": {
+   "category": "damaged",
+   "photo": "damaged",
+   "source": "handwritten"
+  }
+ },
+ {
+  "id": 1046,
+  "subject": "Shipping options",
+  "from": "Hannah Berg",
+  "received": "87 min ago",
+  "body": "Need help checking what shipping options are available",
+  "images": [],
+  "truth": {
+   "category": "shipping",
+   "photo": "none",
+   "source": "bitext:12114:delivery_options"
+  }
+ },
+ {
+  "id": 1047,
+  "subject": "Price on receipt is wrong",
+  "from": "Mei Chen",
+  "received": "94 min ago",
+  "body": "The price on my receipt doesn't match what was advertised. Receipt attached, can you check the charge?",
+  "images": [
+   "img/receipt2.jpg"
+  ],
+  "truth": {
+   "category": "billing",
+   "photo": "receipt",
+   "source": "handwritten"
+  }
+ },
+ {
+  "id": 1048,
+  "subject": "Where is my package?",
+  "from": "Diego Alvarez",
+  "received": "101 min ago",
+  "body": "I'm trying to check the status of purchase #48213",
+  "images": [],
+  "truth": {
+   "category": "shipping",
+   "photo": "none",
+   "source": "bitext:25754:track_order"
+  }
+ },
+ {
+  "id": 1049,
+  "subject": "Please cancel",
+  "from": "Chloe Dubois",
+  "received": "108 min ago",
+  "body": "I want assistance canceling purchyase #48213",
+  "images": [],
+  "truth": {
+   "category": "order",
+   "photo": "none",
+   "source": "bitext:873:cancel_order"
+  }
+ },
+ {
+  "id": 1050,
+  "subject": "Question about refunds",
+  "from": "Sofia Rossi",
+  "received": "115 min ago",
+  "body": "I want to see your refund policy, how to do it?",
+  "images": [],
+  "truth": {
+   "category": "refund",
+   "photo": "none",
+   "source": "bitext:6106:check_refund_policy"
+  }
+ }
+]

@@ -1,0 +1,7 @@
+node_modules
+.DS_Store
+*.log
+.jev-spend.json
+extension/core/
+.superpowers/
+test-results/

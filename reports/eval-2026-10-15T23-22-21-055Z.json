@@ -8,7 +8,8 @@
   "autoRate": 1,
   "escalationRate": 0,
   "clickAccuracy": 1,
-  "photoAccuracy": 1,
+  "photoAccuracy": 0.96,
+  "photoTypeAccuracy": 1,
   "perCategory": {
     "refund": {
       "count": 7,
@@ -44,10 +45,10 @@
     }
   },
   "confusion": [],
-  "p50LatencyMs": 1343.4828330000018,
-  "p95LatencyMs": 2197.665584000002,
-  "totalCostUsd": 0.019483085999999927,
-  "costPer1kUsd": 0.3896617199999986,
+  "p50LatencyMs": 1259.182415999996,
+  "p95LatencyMs": 1924.2332909999986,
+  "totalCostUsd": 0.019483632000000015,
+  "costPer1kUsd": 0.3896726400000003,
   "tickets": [
     {
       "id": 1001,
@@ -64,26 +65,8 @@
         "Account"
       ],
       "correct": true,
-      "latencyMs": 2008.886124,
-      "costUsd": 0.0003886679999999948
-    },
-    {
-      "id": 1003,
-      "title": "Partnership opportunity crypto",
-      "truth": "spam",
-      "decided": "spam",
-      "mode": "auto",
-      "confidence": 1,
-      "photo": "none",
-      "photoTruth": "none",
-      "status": "Triaged",
-      "category": "spam",
-      "clicked": [
-        "Spam"
-      ],
-      "correct": true,
-      "latencyMs": 1734.4386250000007,
-      "costUsd": 0.0003886679999999948
+      "latencyMs": 1377.2524580000004,
+      "costUsd": 0.00038858400000001125
     },
     {
       "id": 1002,
@@ -100,8 +83,26 @@
         "Refund"
       ],
       "correct": true,
-      "latencyMs": 1683.0265,
+      "latencyMs": 1285.575249,
       "costUsd": 0.000388626000000003
+    },
+    {
+      "id": 1003,
+      "title": "Partnership opportunity crypto",
+      "truth": "spam",
+      "decided": "spam",
+      "mode": "auto",
+      "confidence": 1,
+      "photo": "none",
+      "photoTruth": "none",
+      "status": "Triaged",
+      "category": "spam",
+      "clicked": [
+        "Spam"
+      ],
+      "correct": true,
+      "latencyMs": 1193.1175000000003,
+      "costUsd": 0.00038871000000000044
     },
     {
       "id": 1004,
@@ -118,8 +119,8 @@
         "Order change"
       ],
       "correct": true,
-      "latencyMs": 1032.1775829999988,
-      "costUsd": 0.00038871000000000044
+      "latencyMs": 1235.109875000001,
+      "costUsd": 0.0003885839999999974
     },
     {
       "id": 1005,
@@ -136,7 +137,7 @@
         "Wrong item"
       ],
       "correct": true,
-      "latencyMs": 1288.596916999999,
+      "latencyMs": 1512.5217490000014,
       "costUsd": 0.0003886679999999948
     },
     {
@@ -154,8 +155,8 @@
         "Refund"
       ],
       "correct": true,
-      "latencyMs": 1220.252958000001,
-      "costUsd": 0.00038871000000000044
+      "latencyMs": 1385.4944159999995,
+      "costUsd": 0.000388626000000003
     },
     {
       "id": 1007,
@@ -172,7 +173,7 @@
         "Billing"
       ],
       "correct": true,
-      "latencyMs": 1308.8969159999979,
+      "latencyMs": 1976.3139159999992,
       "costUsd": 0.0003886679999999948
     },
     {
@@ -190,8 +191,8 @@
         "Account"
       ],
       "correct": true,
-      "latencyMs": 1728.9667919999974,
-      "costUsd": 0.0003885839999999974
+      "latencyMs": 1009.6682920000003,
+      "costUsd": 0.000388626000000003
     },
     {
       "id": 1009,
@@ -208,26 +209,8 @@
         "Damaged item"
       ],
       "correct": true,
-      "latencyMs": 1391.1861250000002,
-      "costUsd": 0.00038871000000000044
-    },
-    {
-      "id": 1011,
-      "title": "Where is my refund?",
-      "truth": "refund",
-      "decided": "refund",
-      "mode": "auto",
-      "confidence": 1,
-      "photo": "none",
-      "photoTruth": "none",
-      "status": "Triaged",
-      "category": "refund",
-      "clicked": [
-        "Refund"
-      ],
-      "correct": true,
-      "latencyMs": 1869.973958999999,
-      "costUsd": 0.00038871000000000044
+      "latencyMs": 1924.2332909999986,
+      "costUsd": 0.0003887519999999922
     },
     {
       "id": 1010,
@@ -244,8 +227,27 @@
         "Account"
       ],
       "correct": true,
-      "latencyMs": 1423.2671250000021,
-      "costUsd": 0.0003887520000000061
+      "latencyMs": 1548.156708999999,
+      "costUsd": 0.00038871000000000044
+    },
+    {
+      "id": 1011,
+      "title": "Where is my refund?",
+      "truth": "refund",
+      "decided": "refund",
+      "mode": "auto",
+      "confidence": 1,
+      "photo": "none",
+      "photoTruth": "none",
+      "status": "Triaged",
+      "category": "refund",
+      "clicked": [
+        "Refund",
+        "Urgent"
+      ],
+      "correct": true,
+      "latencyMs": 1468.6602490000005,
+      "costUsd": 0.0003885839999999974
     },
     {
       "id": 1012,
@@ -262,8 +264,8 @@
         "Order change"
       ],
       "correct": true,
-      "latencyMs": 1254.7746260000022,
-      "costUsd": 0.0003886259999999961
+      "latencyMs": 1284.2811669999974,
+      "costUsd": 0.00038871000000000044
     },
     {
       "id": 1013,
@@ -280,8 +282,8 @@
         "Account"
       ],
       "correct": true,
-      "latencyMs": 1249.5684169999986,
-      "costUsd": 0.0003887099999999935
+      "latencyMs": 1062.0067500000005,
+      "costUsd": 0.0003886680000000087
     },
     {
       "id": 1014,
@@ -298,8 +300,8 @@
         "Refund"
       ],
       "correct": true,
-      "latencyMs": 1453.0832499999997,
-      "costUsd": 0.00038854199999999867
+      "latencyMs": 1969.851875000004,
+      "costUsd": 0.00038871000000000044
     },
     {
       "id": 1015,
@@ -316,8 +318,8 @@
         "Refund"
       ],
       "correct": true,
-      "latencyMs": 1343.4828330000018,
-      "costUsd": 0.0003886259999999961
+      "latencyMs": 1356.902874000003,
+      "costUsd": 0.0003886679999999948
     },
     {
       "id": 1016,
@@ -334,8 +336,8 @@
         "Wrong item"
       ],
       "correct": true,
-      "latencyMs": 2318.060957999998,
-      "costUsd": 0.0003885839999999974
+      "latencyMs": 1776.9072080000005,
+      "costUsd": 0.000388626000000003
     },
     {
       "id": 1017,
@@ -353,8 +355,8 @@
         "Urgent"
       ],
       "correct": true,
-      "latencyMs": 1894.9000420000084,
-      "costUsd": 0.0003887520000000061
+      "latencyMs": 1740.4346250000017,
+      "costUsd": 0.000388626000000003
     },
     {
       "id": 1018,
@@ -372,8 +374,8 @@
         "Urgent"
       ],
       "correct": true,
-      "latencyMs": 2197.665584000002,
-      "costUsd": 0.0003887520000000061
+      "latencyMs": 1511.421666999995,
+      "costUsd": 0.0003887519999999922
     },
     {
       "id": 1019,
@@ -390,8 +392,8 @@
         "Damaged item"
       ],
       "correct": true,
-      "latencyMs": 1936.9920830000046,
-      "costUsd": 0.000388626000000003
+      "latencyMs": 1410.6286659999969,
+      "costUsd": 0.0003886680000000087
     },
     {
       "id": 1020,
@@ -408,8 +410,8 @@
         "Order change"
       ],
       "correct": true,
-      "latencyMs": 1666.9282499999972,
-      "costUsd": 0.0003886259999999961
+      "latencyMs": 1408.5054999999993,
+      "costUsd": 0.000388626000000003
     },
     {
       "id": 1021,
@@ -426,8 +428,8 @@
         "Billing"
       ],
       "correct": true,
-      "latencyMs": 2431.432041,
-      "costUsd": 0.0003885839999999974
+      "latencyMs": 1114.7319579999967,
+      "costUsd": 0.00038854199999999173
     },
     {
       "id": 1022,
@@ -444,8 +446,8 @@
         "Billing"
       ],
       "correct": true,
-      "latencyMs": 1437.8210410000029,
-      "costUsd": 0.0003886679999999948
+      "latencyMs": 999.8487499999974,
+      "costUsd": 0.00038871000000000044
     },
     {
       "id": 1023,
@@ -462,8 +464,8 @@
         "Spam"
       ],
       "correct": true,
-      "latencyMs": 985.5160419999957,
-      "costUsd": 0.00038866800000000173
+      "latencyMs": 1179.7574999999997,
+      "costUsd": 0.000388626000000003
     },
     {
       "id": 1024,
@@ -480,8 +482,8 @@
         "Shipping"
       ],
       "correct": true,
-      "latencyMs": 1276.3176669999957,
-      "costUsd": 0.0003885839999999974
+      "latencyMs": 1142.765084000006,
+      "costUsd": 0.00038871000000000044
     },
     {
       "id": 1025,
@@ -498,8 +500,8 @@
         "Shipping"
       ],
       "correct": true,
-      "latencyMs": 1061.8970420000041,
-      "costUsd": 0.0003885839999999974
+      "latencyMs": 1103.3987490000072,
+      "costUsd": 0.0003886680000000087
     },
     {
       "id": 1026,
@@ -516,8 +518,8 @@
         "Wrong item"
       ],
       "correct": true,
-      "latencyMs": 1423.2465840000004,
-      "costUsd": 0.0003886259999999961
+      "latencyMs": 1260.5974590000042,
+      "costUsd": 0.00038849999999999996
     },
     {
       "id": 1027,
@@ -525,8 +527,8 @@
       "truth": "order",
       "decided": "order",
       "mode": "auto",
-      "confidence": 0.98,
-      "photo": "none",
+      "confidence": 0.95,
+      "photo": "damaged",
       "photoTruth": "none",
       "status": "Triaged",
       "category": "order",
@@ -534,8 +536,8 @@
         "Order change"
       ],
       "correct": true,
-      "latencyMs": 1339.9593760000062,
-      "costUsd": 0.0003885839999999974
+      "latencyMs": 1123.9440009999962,
+      "costUsd": 0.0003886679999999948
     },
     {
       "id": 1028,
@@ -552,8 +554,8 @@
         "Damaged item"
       ],
       "correct": true,
-      "latencyMs": 1465.1891260000048,
-      "costUsd": 0.0003886259999999961
+      "latencyMs": 1288.1794179999997,
+      "costUsd": 0.0003886680000000087
     },
     {
       "id": 1029,
@@ -570,8 +572,8 @@
         "Billing"
       ],
       "correct": true,
-      "latencyMs": 1671.5628330000036,
-      "costUsd": 0.0003886259999999961
+      "latencyMs": 1228.5,
+      "costUsd": 0.0003886679999999948
     },
     {
       "id": 1030,
@@ -588,8 +590,8 @@
         "Account"
       ],
       "correct": true,
-      "latencyMs": 1529.9259579999998,
-      "costUsd": 0.0003886679999999948
+      "latencyMs": 1483.6149169999917,
+      "costUsd": 0.00038862599999998915
     },
     {
       "id": 1031,
@@ -606,8 +608,8 @@
         "Order change"
       ],
       "correct": true,
-      "latencyMs": 1188.5636669999876,
-      "costUsd": 0.00038866800000000173
+      "latencyMs": 1076.754958000005,
+      "costUsd": 0.00038854199999999173
     },
     {
       "id": 1032,
@@ -624,8 +626,8 @@
         "Billing"
       ],
       "correct": true,
-      "latencyMs": 1594.884001000013,
-      "costUsd": 0.0003886679999999948
+      "latencyMs": 1110.3465419999993,
+      "costUsd": 0.00038871000000000044
     },
     {
       "id": 1033,
@@ -642,8 +644,8 @@
         "Shipping"
       ],
       "correct": true,
-      "latencyMs": 1187.0569169999944,
-      "costUsd": 0.00038854199999999867
+      "latencyMs": 1055.2836250000037,
+      "costUsd": 0.00038871000000000044
     },
     {
       "id": 1034,
@@ -660,8 +662,8 @@
         "Billing"
       ],
       "correct": true,
-      "latencyMs": 1422.3806669999904,
-      "costUsd": 0.00038854199999999867
+      "latencyMs": 1242.0170010000002,
+      "costUsd": 0.0003887519999999922
     },
     {
       "id": 1035,
@@ -678,7 +680,7 @@
         "Shipping"
       ],
       "correct": true,
-      "latencyMs": 1186.3651670000108,
+      "latencyMs": 1104.0587499999965,
       "costUsd": 0.0003885839999999974
     },
     {
@@ -696,8 +698,8 @@
         "Account"
       ],
       "correct": true,
-      "latencyMs": 1018.8561669999908,
-      "costUsd": 0.0003885839999999974
+      "latencyMs": 1045.85437500001,
+      "costUsd": 0.0003885420000000056
     },
     {
       "id": 1037,
@@ -714,8 +716,8 @@
         "Billing"
       ],
       "correct": true,
-      "latencyMs": 1074.3616660000116,
-      "costUsd": 0.00038871000000000044
+      "latencyMs": 1188.69200000001,
+      "costUsd": 0.0003886680000000087
     },
     {
       "id": 1038,
@@ -732,8 +734,8 @@
         "Shipping"
       ],
       "correct": true,
-      "latencyMs": 1160.1017920000013,
-      "costUsd": 0.0003886679999999948
+      "latencyMs": 1128.0030000000115,
+      "costUsd": 0.0003886680000000087
     },
     {
       "id": 1039,
@@ -750,7 +752,7 @@
         "Account"
       ],
       "correct": true,
-      "latencyMs": 1141.0790410000045,
+      "latencyMs": 1128.2147499999992,
       "costUsd": 0.000387659999999998
     },
     {
@@ -768,8 +770,8 @@
         "Wrong item"
       ],
       "correct": true,
-      "latencyMs": 1294.9576249999955,
-      "costUsd": 0.0003866520000000012
+      "latencyMs": 1687.494166000004,
+      "costUsd": 0.0003865680000000038
     },
     {
       "id": 1041,
@@ -787,8 +789,8 @@
         "Urgent"
       ],
       "correct": true,
-      "latencyMs": 1448.0888330000016,
-      "costUsd": 0.0003856019999999988
+      "latencyMs": 1259.182415999996,
+      "costUsd": 0.00038564400000000443
     },
     {
       "id": 1042,
@@ -805,8 +807,8 @@
         "Wrong item"
       ],
       "correct": true,
-      "latencyMs": 1642.6467080000148,
-      "costUsd": 0.00038459399999999505
+      "latencyMs": 1700.270875000002,
+      "costUsd": 0.00038455199999999634
     },
     {
       "id": 1043,
@@ -823,8 +825,8 @@
         "Spam"
       ],
       "correct": true,
-      "latencyMs": 1447.2979999999952,
-      "costUsd": 0.0003836280000000039
+      "latencyMs": 1525.0586670000048,
+      "costUsd": 0.0003836700000000026
     },
     {
       "id": 1044,
@@ -841,8 +843,8 @@
         "Account"
       ],
       "correct": true,
-      "latencyMs": 1201.6150840000046,
-      "costUsd": 0.00038257800000000147
+      "latencyMs": 945.761125999983,
+      "costUsd": 0.0003826200000000002
     },
     {
       "id": 1045,
@@ -859,8 +861,8 @@
         "Damaged item"
       ],
       "correct": true,
-      "latencyMs": 1343.160917000001,
-      "costUsd": 0.0003816960000000008
+      "latencyMs": 1341.4404579999973,
+      "costUsd": 0.00038173800000000646
     },
     {
       "id": 1046,
@@ -877,8 +879,8 @@
         "Shipping"
       ],
       "correct": true,
-      "latencyMs": 1320.2252500000031,
-      "costUsd": 0.0003807299999999958
+      "latencyMs": 1251.844499999992,
+      "costUsd": 0.0003808139999999932
     },
     {
       "id": 1047,
@@ -895,8 +897,8 @@
         "Billing"
       ],
       "correct": true,
-      "latencyMs": 1411.0174169999955,
-      "costUsd": 0.0003798900000000008
+      "latencyMs": 1292.3076670000155,
+      "costUsd": 0.0003798059999999964
     },
     {
       "id": 1048,
@@ -904,7 +906,7 @@
       "truth": "shipping",
       "decided": "shipping",
       "mode": "auto",
-      "confidence": 0.99,
+      "confidence": 0.98,
       "photo": "none",
       "photoTruth": "none",
       "status": "Triaged",
@@ -913,8 +915,8 @@
         "Shipping"
       ],
       "correct": true,
-      "latencyMs": 1305.8558329999942,
-      "costUsd": 0.00037883999999999834
+      "latencyMs": 1375.6004170000087,
+      "costUsd": 0.0003789240000000027
     },
     {
       "id": 1049,
@@ -931,8 +933,8 @@
         "Order change"
       ],
       "correct": true,
-      "latencyMs": 1170.6259999999893,
-      "costUsd": 0.00037779000000000285
+      "latencyMs": 931.7929170000134,
+      "costUsd": 0.0003779579999999977
     },
     {
       "id": 1050,
@@ -949,8 +951,8 @@
         "Refund"
       ],
       "correct": true,
-      "latencyMs": 812.1735829999961,
-      "costUsd": 0.000377075999999997
+      "latencyMs": 814.3227499999775,
+      "costUsd": 0.00037707600000000396
     }
   ],
   "errors": []

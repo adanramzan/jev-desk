@@ -13,13 +13,13 @@ The decisions come from [TypeSafe's Jev](https://typesafe.ai), a "System One" mo
 | Tickets triaged | **50 / 50** |
 | Correct category | **100%** (50/50) |
 | Correct photo type on tickets with a photo (damaged item, wrong product, receipt, error screenshot) | **100%** (13/13) |
-| Correct photo type on all tickets | **98%** (49/50): one text-only ticket was tagged "receipt", though its category was still right |
+| Correct photo type on all tickets | **96%** (48/50): two text-only tickets were given a photo type, though their category was still right |
 | Clicked the right button | **100%** |
-| Jev decision time per ticket (2 calls) | **1.3 s** median, 1.7 s p95 |
-| End-to-end, including screenshots and clicks | about **2 s** per ticket (50 tickets in 99 s) |
+| Auto-filed (every click needs ≥ 0.85 confidence) | **100%**, 0 escalations, 0 errors |
+| Jev decision time per ticket (2 calls) | **1.26 s** median, 1.9 s p95 |
 | Total Jev cost | **$0.019** (estimated from input tokens) → about **$0.39 per 1,000 tickets** |
 
-Two independent full runs gave identical results (same decisions, same single photo slip, same cost). Both reports are in [`reports/`](reports/). Run it yourself with `npm run eval`.
+I ran the full eval four times while fixing bugs, and category accuracy was 50/50 every time. The final report is in [`reports/`](reports/). Run it yourself with `npm run eval`.
 
 > Honest caveat: these tickets are clear-cut. Each one comes from a labelled dataset where every message has a single intent, or was written by me to show photo triage. A messy real inbox (several issues per email, threads, sarcasm) will score lower. That's what the confidence gate is for: below the threshold, the ticket goes to **Needs a human** instead of being auto-filed.
 
@@ -38,6 +38,12 @@ Two independent full runs gave identical results (same decisions, same single ph
 Two Jev calls per ticket: one to pick the next unassigned ticket from the list, and one to triage it *and* locate every action button at once. Jev answers all questions in a call in parallel, so the 15 questions in the triage call cost about the same as one. A button is only clicked when Jev's choice of mark has confidence ≥ 0.85.
 
 **Why numbered marks instead of raw coordinates?** I measured both. Jev's Box answer (a bounding box on an image) found the right button in a row of look-alike buttons only 5/7 times. Drawing a small numbered label on every clickable element and asking Jev to *choose* a label ("set-of-marks", a standard web-agent technique) was right 14/14 times at confidence 1.0. So Box is used only to show the evidence (the damaged area in a customer's photo), never to decide where to click. The marks come from a generic query for clickable elements inside two regions you point it at (the ticket list and the action bar). In the demo helpdesk those are `[data-ticket-list]` and `[data-ticket-actions]`; on another helpdesk you set two CSS selectors in the extension settings. Autopilot refuses to run if the regions aren't found, so it never clicks around a page it doesn't understand. **Scan** (read-only, no clicks) works on any page.
+
+## What broke along the way
+
+- **Labels on borders.** I first drew each numbered label on the element's top-left corner. For stacked ticket rows, that put label "3" right on the line between two rows, and Jev's choice split 74/19 between them. Labels now sit inside tall rows (centred) and on the corner of small buttons (so they don't cover short words like "Billing"). Confidence on the row choice went from 0.72 to 0.97.
+- **Marks on hidden rows.** Rows scrolled out of the list were still labelled, because they were inside the window, just clipped by their container. Now an element is only marked if it's actually what's visible at its centre (`elementFromPoint`).
+- **The confidence gate found both bugs.** Before clicks required ≥ 0.85, these mistakes were silent: the agent once opened ticket #1011 before #1010. With the gate, low confidence stops or escalates instead of misclicking.
 
 ## Two ways to run it
 
@@ -64,7 +70,7 @@ The runner reads the API key from the `JEV_API_KEY` environment variable.
 
 Every call is priced at TypeSafe's $42 per billion input tokens. A ledger (`.jev-spend.json`) enforces a hard cap of $4 for the runner; the extension has its own budget, default $1. The automated tests never call Jev: they run against a local stub server.
 
-Building and evaluating the whole project, including two full evals, used about $0.06 of Jev credit (ledger: $0.055).
+Building and evaluating the whole project, including four full evals, used about $0.10 of Jev credit (ledger: $0.095).
 
 ## Project layout
 

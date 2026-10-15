@@ -22,6 +22,7 @@
   function add({ scope, strict = false } = {}) {
     remove();
     mount();
+    if (strict && !scope) return [];
     const area = scope ? document.querySelector(scope) : document;
     if (!area && strict) return [];
     for (const element of (area || document).querySelectorAll('button, a[href], [role="button"], input, select, [data-ticket-id]')) {
@@ -29,9 +30,15 @@
       const rect = element.getBoundingClientRect();
       const style = getComputedStyle(element);
       if (!rect.width || !rect.height || rect.bottom <= 0 || rect.right <= 0 || rect.top >= innerHeight || rect.left >= innerWidth || style.visibility === 'hidden' || style.display === 'none') continue;
+      // Skip elements that are scrolled out of a container or covered: what's at their centre must be them.
+      const hit = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
+      if (!hit || !element.contains(hit)) continue;
       const id = `m${marked.length + 1}`;
       const label = overlay('jev-mark', {
-        left: `${Math.max(0, rect.left)}px`, top: `${Math.max(0, rect.top)}px`,
+        // Tall elements (list rows): label centred inside, since one on the border between two rows is ambiguous to Jev.
+        // Small elements (buttons): label on the top-left corner, so it doesn't cover short words like "Billing".
+        left: `${Math.max(0, rect.left + (rect.height >= 40 ? 2 : 0))}px`,
+        top: `${Math.max(0, rect.height >= 40 ? rect.top + rect.height / 2 - 9 : rect.top)}px`,
         background: '#d93025', color: 'white', font: 'bold 12px/18px system-ui',
         minWidth: '18px', textAlign: 'center', borderRadius: '3px', boxShadow: '0 1px 4px #0008',
       }, String(marked.length + 1));

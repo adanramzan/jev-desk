@@ -89,3 +89,7 @@ test/        unit, e2e (stub Jev), extension tests: npm test
 - "Helpline" is a fictional demo app. This project is not affiliated with TypeSafe, Zendesk or any helpdesk vendor.
 
 Built by orchestrating three coding agents: Claude (planning, review, integration), OpenAI Codex, and Google Antigravity.
+
+## License
+
+Code is MIT, see [LICENSE](LICENSE). Demo photos keep their own Creative Commons licences listed in [helpdesk/img/CREDITS.md](helpdesk/img/CREDITS.md).

@@ -1,7 +1,6 @@
 import { chromium } from 'playwright';
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { writeFileSync } from 'node:fs';
-import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createJev, CATEGORIES } from '../core/jev.mjs';
@@ -13,12 +12,6 @@ const marksPath = join(root, 'core/marks.js');
 const labelFor = Object.fromEntries(CATEGORIES.map(([key, label]) => [key, label]));
 const percentile = (values, p) => values.length ? [...values].sort((a, b) => a - b)[Math.ceil(values.length * p) - 1] : null;
 const rate = (n, total) => total ? n / total : null;
-
-async function getApiKey() {
-  if (process.env.JEV_API_KEY) return process.env.JEV_API_KEY;
-  const env = await readFile(join(homedir(), '.ragbench/jev.env'), 'utf8').catch(() => '');
-  return /(?:^|\n)\s*(?:export\s+)?JEV_API_KEY\s*=\s*["']?([^\s"'#]+)/.exec(env)?.[1];
-}
 
 function summarize(events, states, truth, stoppedBy, spentUsd) {
   const stateById = new Map(states.map(state => [state.id, state]));
@@ -78,7 +71,7 @@ function markdown(report) {
 
 export async function run({ eval: evaluate = false, headed = !evaluate, limit = Infinity, slow = 0, budgetUsd = 4, baseUrl, apiKey, ledgerPath = join(root, '.jev-spend.json'), reportsDir = join(root, 'reports'), log = console.log, onPage, record } = {}) {
   if (typeof budgetUsd !== 'number' || !Number.isFinite(budgetUsd) || budgetUsd <= 0) throw new Error('budgetUsd must be a finite positive number');
-  const key = apiKey || await getApiKey();
+  const key = apiKey || process.env.JEV_API_KEY;
   if (!key) throw new Error('JEV_API_KEY is required');
   const ledgerFile = resolve(ledgerPath);
   const outputDir = resolve(reportsDir);

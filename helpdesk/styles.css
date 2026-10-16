@@ -245,7 +245,7 @@ html, body {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  flex-wrap: nowrap;
+  flex-wrap: wrap; /* wraps instead of clipping if Inter fails to load */
   margin-top: auto;
 }
 

@@ -4,7 +4,6 @@
 
 The decisions come from [TypeSafe's Jev](https://typesafe.ai), a "System One" model. Jev doesn't write text. It returns typed answers (a choice, a score, a yes/no probability, a box on an image) with calibrated confidence, in well under a second.
 
-![Jev Desk triaging tickets](media/demo.gif)
 
 ## Results (real run, 50 tickets)
 

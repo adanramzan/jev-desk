@@ -1,66 +1,69 @@
-/* ========================================================
-   Jev Desk — Side Panel Styles
-   Polished dark/light theme, clean lanes, confidence bars.
-   ======================================================== */
+/* Visual language from ./DESIGN.md (Intercom analysis): cream canvas, white hairline cards, charcoal buttons; Fin Orange only for Jev/AI moments. */
 
 :root {
-  --bg: #ffffff;
-  --bg-surface: #f8f9fa;
+  --bg: #f5f1ec;
+  --bg-surface: #f5f1ec;
   --bg-card: #ffffff;
-  --bg-hover: #f1f3f4;
-  --text: #202124;
-  --text-secondary: #5f6368;
-  --text-muted: #80868b;
-  --border: #e0e0e0;
-  --accent: #1a73e8;
-  --accent-hover: #1557b0;
-  --urgent: #d93025;
-  --urgent-bg: #fce8e6;
-  --success: #1e8e3e;
-  --success-bg: #e6f4ea;
-  --refund-bg: #fef7e0;
-  --refund-text: #e37400;
-  --human-bg: #f3e8fd;
-  --human-text: #8430ce;
-  --confidence-track: #e8eaed;
-  --confidence-fill: #1a73e8;
-  --confidence-high: #1e8e3e;
-  --confidence-mid: #f9ab00;
-  --confidence-low: #d93025;
+  --bg-hover: #ebe7e1;
+  --text: #111111;
+  --text-secondary: #626260;
+  --text-muted: #7b7b78;
+  --border: #d3cec6;
+  --border-soft: #ebe7e1;
+  --primary: #111111;
+  --primary-hover: #000000;
+  --on-primary: #ffffff;
+  --fin: #ff5600;
+  --fin-hover: #e04b00;
+  --fin-bg: #ffe9de;
+  --fin-text: #b83c00;
+  --urgent: #c41c1c;
+  --urgent-bg: #fbe9e7;
+  --success: #0a7a35;
+  --success-bg: #e3f4e8;
+  --refund-bg: #fbefd5;
+  --refund-text: #9a5b00;
+  --human-bg: #ebe7e1;
+  --human-text: #111111;
+  --confidence-track: #ebe7e1;
+  --confidence-high: #111111;
+  --confidence-mid: #7b7b78;
+  --confidence-low: #c41c1c;
   --radius: 8px;
-  --radius-sm: 4px;
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
-  --shadow-md: 0 2px 6px rgba(0,0,0,0.10);
+  --radius-lg: 12px;
+  --radius-sm: 6px;
   --transition: 150ms ease;
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #1e1e1e;
-    --bg-surface: #252526;
-    --bg-card: #2d2d2d;
-    --bg-hover: #383838;
-    --text: #e8eaed;
-    --text-secondary: #9aa0a6;
-    --text-muted: #80868b;
-    --border: #3c4043;
-    --accent: #8ab4f8;
-    --accent-hover: #aecbfa;
-    --urgent: #f28b82;
+    --bg: #000000;
+    --bg-surface: #000000;
+    --bg-card: #313130;
+    --bg-hover: #3c3c3b;
+    --text: #ffffff;
+    --text-secondary: #9c9fa5;
+    --text-muted: #9c9fa5;
+    --border: #4a4a48;
+    --border-soft: #313130;
+    --primary: #ffffff;
+    --primary-hover: #ebe7e1;
+    --on-primary: #111111;
+    --fin-bg: #4a2210;
+    --fin-text: #ff9a6b;
+    --urgent: #ff8a80;
     --urgent-bg: #3c1f1e;
-    --success: #81c995;
+    --success: #6fd88f;
     --success-bg: #1e3a2a;
     --refund-bg: #3e3424;
-    --refund-text: #fdd663;
-    --human-bg: #2e2442;
-    --human-text: #c58af9;
-    --confidence-track: #3c4043;
-    --confidence-fill: #8ab4f8;
-    --confidence-high: #81c995;
-    --confidence-mid: #fdd663;
-    --confidence-low: #f28b82;
-    --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
-    --shadow-md: 0 2px 6px rgba(0,0,0,0.4);
+    --refund-text: #f2c26b;
+    --human-bg: #3c3c3b;
+    --human-text: #ffffff;
+    --confidence-track: #4a4a48;
+    --confidence-high: #ffffff;
+    --confidence-mid: #9c9fa5;
+    --confidence-low: #ff8a80;
   }
 }
 
@@ -73,7 +76,9 @@
 }
 
 body {
-  font: 13px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font: 400 13px/1.45 var(--font);
+  letter-spacing: -0.1px;
+  -webkit-font-smoothing: antialiased;
   color: var(--text);
   background: var(--bg);
   display: flex;
@@ -88,7 +93,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 14px;
+  padding: 12px 14px;
   background: var(--bg-surface);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
@@ -102,13 +107,13 @@ body {
 
 .header-logo {
   font-size: 18px;
-  color: var(--accent);
+  color: var(--fin);
 }
 
 .header-title {
-  font-weight: 700;
-  font-size: 14px;
-  letter-spacing: -0.2px;
+  font-weight: 500;
+  font-size: 15px;
+  letter-spacing: -0.3px;
 }
 
 .header-stats {
@@ -159,23 +164,24 @@ body {
 
 .field-label {
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-secondary);
 }
 
 .field-input {
-  padding: 5px 8px;
+  padding: 6px 10px;
+  font-family: inherit;
   font-size: 12px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  background: var(--bg);
+  background: var(--bg-card);
   color: var(--text);
   outline: none;
   transition: border-color var(--transition);
 }
 
 .field-input:focus {
-  border-color: var(--accent);
+  border-color: var(--text);
 }
 
 /* ---------- Buttons ---------- */
@@ -184,27 +190,35 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 7px 14px;
+  min-height: 32px;
+  padding: 7px 16px;
+  font-family: inherit;
   font-size: 12px;
-  font-weight: 600;
-  border: none;
-  border-radius: var(--radius);
+  font-weight: 500;
+  border: 1px solid transparent;
+  border-radius: 9999px;
   cursor: pointer;
-  transition: background var(--transition), color var(--transition);
+  transition: background var(--transition), color var(--transition), border-color var(--transition);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
 }
 
 .btn-sm {
-  padding: 4px 10px;
+  min-height: 28px;
+  padding: 4px 12px;
   font-size: 11px;
 }
 
 .btn-primary {
-  background: var(--accent);
-  color: #fff;
+  background: var(--primary);
+  color: var(--on-primary);
 }
 
 .btn-primary:hover {
-  background: var(--accent-hover);
+  background: var(--primary-hover);
 }
 
 .btn-primary:disabled {
@@ -213,17 +227,34 @@ body {
 }
 
 .btn-secondary {
-  background: var(--bg-hover);
+  background: var(--bg-card);
   color: var(--text);
+  border-color: var(--border);
 }
 
 .btn-secondary:hover {
-  background: var(--border);
+  background: var(--bg-hover);
 }
 
-.btn-secondary[data-state="on"] {
-  background: var(--urgent);
+/* Autopilot is a Jev/AI moment: Fin Orange */
+#btn-autopilot {
+  color: var(--fin);
+  border-color: var(--fin);
+}
+
+#btn-autopilot:hover {
+  background: var(--fin-bg);
+}
+
+.btn-secondary[data-state="on"],
+#btn-autopilot[data-state="on"] {
+  background: var(--fin);
+  border-color: var(--fin);
   color: #fff;
+}
+
+#btn-autopilot[data-state="on"]:hover {
+  background: var(--fin-hover);
 }
 
 /* ---------- Controls ---------- */
@@ -231,7 +262,7 @@ body {
 .controls {
   display: flex;
   gap: 8px;
-  padding: 10px 14px;
+  padding: 12px 14px;
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
@@ -245,28 +276,31 @@ body {
 .board {
   flex: 1;
   overflow-y: auto;
-  padding: 8px 10px;
+  padding: 10px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 6px;
 }
 
 /* ---------- Lane ---------- */
 
 .lane {
-  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .lane-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 6px 10px;
-  background: var(--bg-surface);
+  min-height: 34px;
+  padding: 6px 12px;
+  background: var(--bg-card);
   cursor: pointer;
   user-select: none;
-  border-radius: var(--radius);
   transition: background var(--transition);
 }
 
@@ -275,12 +309,12 @@ body {
 }
 
 .lane[open] .lane-header {
-  border-radius: var(--radius) var(--radius) 0 0;
+  border-bottom: 1px solid var(--border-soft);
 }
 
 .lane-name {
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -294,9 +328,9 @@ body {
   height: 18px;
   padding: 0 5px;
   font-size: 10px;
-  font-weight: 700;
-  border-radius: 9px;
-  background: var(--border);
+  font-weight: 500;
+  border-radius: 9999px;
+  background: var(--bg-hover);
   color: var(--text-secondary);
 }
 
@@ -307,17 +341,24 @@ body {
 .lane-body {
   display: flex;
   flex-direction: column;
+  background: var(--border-soft);
   gap: 1px;
-  background: var(--bg-surface);
-  border-radius: 0 0 var(--radius) var(--radius);
 }
 
-.lane-urgent .lane-count {
+/* Lanes holding Jev decisions get the Fin Orange badge */
+.lane[open] .lane-count {
+  background: var(--fin-bg);
+  color: var(--fin-text);
+}
+
+.lane-urgent .lane-count,
+.lane-urgent[open] .lane-count {
   background: var(--urgent-bg);
   color: var(--urgent);
 }
 
-.lane-human .lane-count {
+.lane-human .lane-count,
+.lane-human[open] .lane-count {
   background: var(--human-bg);
   color: var(--human-text);
 }
@@ -328,7 +369,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 8px 10px;
+  padding: 9px 12px;
   background: var(--bg-card);
   transition: background var(--transition);
 }
@@ -356,21 +397,21 @@ body {
 
 .card-confidence {
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 500;
   white-space: nowrap;
   color: var(--text-secondary);
 }
 
 .card-bar {
   height: 3px;
-  border-radius: 1.5px;
+  border-radius: 9999px;
   background: var(--confidence-track);
   overflow: hidden;
 }
 
 .card-bar-fill {
   height: 100%;
-  border-radius: 1.5px;
+  border-radius: 9999px;
   transition: width 300ms ease;
 }
 
@@ -387,10 +428,10 @@ body {
 .badge {
   display: inline-flex;
   align-items: center;
-  padding: 1px 5px;
+  padding: 1px 7px;
   font-size: 10px;
-  font-weight: 600;
-  border-radius: 3px;
+  font-weight: 500;
+  border-radius: 9999px;
 }
 
 .badge-refund {
